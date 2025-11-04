@@ -1,0 +1,158 @@
+// Prisma schema for Slack Question Router
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Workspace {
+  id           String   @id @default(uuid())
+  slackTeamId  String   @unique @map("slack_team_id")
+  teamName     String?  @map("team_name")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  channels      Channel[]
+  users         User[]
+  questions     Question[]
+  config        WorkspaceConfig?
+  dailyStats    DailyStat[]
+
+  @@map("workspaces")
+}
+
+model Channel {
+  id              String   @id @default(uuid())
+  workspaceId     String   @map("workspace_id")
+  slackChannelId  String   @map("slack_channel_id")
+  channelName     String?  @map("channel_name")
+  isMonitored     Boolean  @default(true) @map("is_monitored")
+  settings        Json?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  workspace       Workspace  @relation(fields: [workspaceId], references: [id])
+  questions       Question[]
+  dailyStats      DailyStat[]
+
+  @@unique([workspaceId, slackChannelId])
+  @@map("channels")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  workspaceId   String    @map("workspace_id")
+  slackUserId   String    @map("slack_user_id")
+  displayName   String?   @map("display_name")
+  realName      String?   @map("real_name")
+  email         String?
+  isActive      Boolean   @default(true) @map("is_active")
+  lastSeenAt    DateTime? @map("last_seen_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  workspace           Workspace       @relation(fields: [workspaceId], references: [id])
+  questionsAsked      Question[]      @relation("QuestionAsker")
+  questionsAnswered   Question[]      @relation("QuestionAnswerer")
+  expertise           UserExpertise[]
+  finalEscalationFor  WorkspaceConfig?
+
+  @@unique([workspaceId, slackUserId])
+  @@map("users")
+}
+
+model Question {
+  id                String    @id @default(uuid())
+  workspaceId       String    @map("workspace_id")
+  channelId         String    @map("channel_id")
+  askerId           String    @map("asker_id")
+  slackMessageId    String    @map("slack_message_id")
+  slackThreadId     String?   @map("slack_thread_id")
+  messageText       String    @map("message_text") @db.Text
+  extractedKeywords String[]  @map("extracted_keywords")
+  askedAt           DateTime  @map("asked_at")
+  answeredAt        DateTime? @map("answered_at")
+  answererId        String?   @map("answerer_id")
+  status            String    @default("unanswered")
+  escalationLevel   Int       @default(0) @map("escalation_level")
+  lastEscalatedAt   DateTime? @map("last_escalated_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id])
+  channel      Channel       @relation(fields: [channelId], references: [id])
+  asker        User          @relation("QuestionAsker", fields: [askerId], references: [id])
+  answerer     User?         @relation("QuestionAnswerer", fields: [answererId], references: [id])
+  escalations  Escalation[]
+
+  @@map("questions")
+}
+
+model UserExpertise {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  topic           String
+  confidenceScore Float     @default(0.5) @map("confidence_score")
+  answerCount     Int       @default(0) @map("answer_count")
+  lastAnsweredAt  DateTime? @map("last_answered_at")
+  source          String    @default("auto")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, topic])
+  @@map("user_expertise")
+}
+
+model Escalation {
+  id              String   @id @default(uuid())
+  questionId      String   @map("question_id")
+  escalationLevel Int      @map("escalation_level")
+  suggestedUsers  String[] @map("suggested_users")
+  actionTaken     String?  @map("action_taken")
+  escalatedAt     DateTime @default(now()) @map("escalated_at")
+
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@map("escalations")
+}
+
+model WorkspaceConfig {
+  id                        String   @id @default(uuid())
+  workspaceId               String   @unique @map("workspace_id")
+  firstEscalationMinutes    Int      @default(120) @map("first_escalation_minutes")
+  secondEscalationMinutes   Int      @default(240) @map("second_escalation_minutes")
+  finalEscalationMinutes    Int      @default(1440) @map("final_escalation_minutes")
+  gracePeriodMinutes        Int      @default(30) @map("grace_period_minutes")
+  dmSuggestionsEnabled      Boolean  @default(true) @map("dm_suggestions_enabled")
+  threadPostsEnabled        Boolean  @default(true) @map("thread_posts_enabled")
+  finalEscalationUserId     String?  @map("final_escalation_user_id")
+  settings                  Json?
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
+
+  workspace             Workspace @relation(fields: [workspaceId], references: [id])
+  finalEscalationUser   User?     @relation(fields: [finalEscalationUserId], references: [id])
+
+  @@map("workspace_config")
+}
+
+model DailyStat {
+  id                     String   @id @default(uuid())
+  workspaceId            String   @map("workspace_id")
+  channelId              String?  @map("channel_id")
+  date                   DateTime @db.Date
+  questionsAsked         Int      @default(0) @map("questions_asked")
+  questionsAnswered      Int      @default(0) @map("questions_answered")
+  avgResponseTimeMinutes Int?     @map("avg_response_time_minutes")
+  createdAt              DateTime @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  channel   Channel?  @relation(fields: [channelId], references: [id])
+
+  @@unique([workspaceId, channelId, date])
+  @@map("daily_stats")
+}
