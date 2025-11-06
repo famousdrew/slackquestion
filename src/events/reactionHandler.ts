@@ -47,19 +47,17 @@ export function registerReactionHandler(app: App) {
         case 'white_check_mark':
         case 'heavy_check_mark':
         case 'ballot_box_with_check':
-          // Mark as answered - check if reactor is the question asker
-          if (user === question.asker.slackUserId) {
-            const userInfo = await client.users.info({ user });
-            const userData = {
-              displayName: userInfo.user?.profile?.display_name || userInfo.user?.name,
-              realName: userInfo.user?.profile?.real_name,
-              email: userInfo.user?.profile?.email,
-            };
-            const answerUser = await ensureUser(workspace.id, user, userData);
+          // Mark as answered - anyone can mark it
+          const userInfo = await client.users.info({ user });
+          const userData = {
+            displayName: userInfo.user?.profile?.display_name || userInfo.user?.name,
+            realName: userInfo.user?.profile?.real_name,
+            email: userInfo.user?.profile?.email,
+          };
+          const answerUser = await ensureUser(workspace.id, user, userData);
 
-            await markQuestionAnswered(question.id, answerUser.id);
-            logger.info(`Question ${question.id} marked as answered by asker's reaction`);
-          }
+          await markQuestionAnswered(question.id, answerUser.id);
+          logger.info(`Question ${question.id} marked as answered by user ${user}`);
           break;
 
         case 'no_entry':
@@ -82,17 +80,6 @@ export function registerReactionHandler(app: App) {
             },
           });
           logger.info(`Question ${question.id} snoozed for 1 hour`);
-          break;
-
-        case 'eyes':
-          // Someone is working on it - snooze briefly
-          await prisma.question.update({
-            where: { id: question.id },
-            data: {
-              lastEscalatedAt: new Date(),
-            },
-          });
-          logger.info(`Question ${question.id} acknowledged - escalation delayed`);
           break;
       }
 

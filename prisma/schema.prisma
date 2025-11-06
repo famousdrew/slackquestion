@@ -53,11 +53,11 @@ model User {
   lastSeenAt    DateTime? @map("last_seen_at")
   createdAt     DateTime  @default(now()) @map("created_at")
 
-  workspace           Workspace       @relation(fields: [workspaceId], references: [id])
-  questionsAsked      Question[]      @relation("QuestionAsker")
-  questionsAnswered   Question[]      @relation("QuestionAnswerer")
+  workspace           Workspace         @relation(fields: [workspaceId], references: [id])
+  questionsAsked      Question[]        @relation("QuestionAsker")
+  questionsAnswered   Question[]        @relation("QuestionAnswerer")
   expertise           UserExpertise[]
-  finalEscalationFor  WorkspaceConfig?
+  finalEscalationFor  WorkspaceConfig[]
 
   @@unique([workspaceId, slackUserId])
   @@map("users")
@@ -123,6 +123,7 @@ model Escalation {
 model WorkspaceConfig {
   id                        String   @id @default(uuid())
   workspaceId               String   @unique @map("workspace_id")
+  answerDetectionMode       String   @default("emoji_only") @map("answer_detection_mode")
   firstEscalationMinutes    Int      @default(120) @map("first_escalation_minutes")
   secondEscalationMinutes   Int      @default(240) @map("second_escalation_minutes")
   finalEscalationMinutes    Int      @default(1440) @map("final_escalation_minutes")

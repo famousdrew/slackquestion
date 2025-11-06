@@ -11,16 +11,26 @@ export function registerMessageHandler(app: App) {
   // Handle regular channel messages
   app.message(async ({ message, client, logger }) => {
     try {
+      logger.info(`Message received: ${JSON.stringify(message).substring(0, 200)}`);
+
       // Only process regular messages (not bot messages, edits, etc.)
       if (message.subtype || !('text' in message) || !message.text) {
+        logger.info(`Skipping message - subtype: ${message.subtype}, has text: ${('text' in message)}`);
         return;
       }
 
       const messageText = message.text;
+      logger.info(`Processing message text: "${messageText}"`);
       const userId = message.user;
       const channelId = message.channel;
       const messageTs = message.ts;
       const threadTs = message.thread_ts;
+
+      // Skip messages in threads (replies)
+      if (threadTs && threadTs !== messageTs) {
+        logger.info('Skipping threaded message (reply)');
+        return;
+      }
 
       // Check if this is a question
       if (!isQuestion(messageText)) {
@@ -95,7 +105,7 @@ export function registerMessageHandler(app: App) {
         await client.reactions.add({
           channel: channelId,
           timestamp: messageTs,
-          name: 'eyes',
+          name: 'question',
         });
       }
 
