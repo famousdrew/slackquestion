@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slack Question Router - Intelligent Question Management for Slack</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 0 60px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        header p {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            max-width: 700px;
+            margin: 0 auto 30px;
+        }
+
+        .hero-emoji {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        /* Section Styles */
+        section {
+            padding: 60px 0;
+        }
+
+        section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #2d3748;
+            text-align: center;
+        }
+
+        section .subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #718096;
+            margin-bottom: 50px;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+
+        .feature-card p {
+            color: #718096;
+            line-height: 1.7;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            background: white;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .step {
+            text-align: center;
+            position: relative;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            line-height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .step h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+
+        .step p {
+            color: #718096;
+        }
+
+        /* Commands Section */
+        .commands {
+            background: #f7fafc;
+        }
+
+        .command-list {
+            max-width: 800px;
+            margin: 40px auto 0;
+        }
+
+        .command-item {
+            background: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .command-item code {
+            background: #edf2f7;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .command-item h4 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+
+        .command-item p {
+            color: #718096;
+            margin-top: 10px;
+        }
+
+        /* Stats Section */
+        .stats {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .stats h2 {
+            color: white;
+        }
+
+        .stats .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Usage Guide */
+        .usage-guide {
+            background: white;
+        }
+
+        .usage-content {
+            max-width: 900px;
+            margin: 40px auto 0;
+        }
+
+        .usage-section {
+            margin-bottom: 40px;
+        }
+
+        .usage-section h3 {
+            font-size: 1.8rem;
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .usage-section h3 span {
+            margin-right: 10px;
+        }
+
+        .usage-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .usage-section li {
+            padding: 12px 0 12px 30px;
+            position: relative;
+            color: #4a5568;
+        }
+
+        .usage-section li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        .info-box {
+            background: #ebf8ff;
+            border-left: 4px solid #4299e1;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .info-box h4 {
+            color: #2c5282;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            color: #2d3748;
+        }
+
+        /* Footer */
+        footer {
+            background: #2d3748;
+            color: white;
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        footer p {
+            opacity: 0.8;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            header p {
+                font-size: 1.1rem;
+            }
+
+            section h2 {
+                font-size: 2rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .steps {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="hero-emoji">❓⚡</div>
+            <h1>Slack Question Router</h1>
+            <p>Never let another question go unanswered. Intelligent escalation system that ensures every question in your Slack workspace gets the attention it deserves.</p>
+        </div>
+    </header>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <h2>Key Features</h2>
+            <p class="subtitle">Powerful question management built for modern teams</p>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Smart Detection</h3>
+                    <p>Automatically identifies questions posted in monitored channels using advanced pattern recognition. Detects question marks, interrogative words, and common question patterns.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Intelligent Escalation</h3>
+                    <p>Two-tier escalation system: first alerts your support team in the thread, then posts to a dedicated escalation channel if still unanswered. Fully configurable timing.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">✅</div>
+                    <h3>Flexible Answer Detection</h3>
+                    <p>Three modes: emoji-only (requires checkmark reaction), thread-auto (any reply stops escalation), or hybrid (replies pause escalation until marked complete).</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Real-Time Analytics</h3>
+                    <p>Track questions asked, answered, average response times, and escalation patterns. Get insights into your team's responsiveness and support quality.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔧</div>
+                    <h3>Easy Configuration</h3>
+                    <p>Simple slash commands to adjust escalation timings, answer detection modes, and channel monitoring. No complex setup required.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <h3>Built for Scale</h3>
+                    <p>Handles multiple channels and concurrent questions effortlessly. PostgreSQL backend with efficient polling ensures reliable performance.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works">
+        <div class="container">
+            <h2>How It Works</h2>
+            <p class="subtitle">Simple workflow, powerful results</p>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Question Posted</h3>
+                    <p>User posts a question in any monitored Slack channel. The bot detects it instantly and saves it to the database.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>First Escalation</h3>
+                    <p>After the configured time (default 2 minutes), if unanswered, the bot posts in the thread mentioning your support team.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Second Escalation</h3>
+                    <p>If still unanswered after the second threshold (default 4 minutes), the question is posted to your escalation channel for wider visibility.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>Resolution</h3>
+                    <p>Once answered (via emoji reaction or thread reply depending on mode), escalation stops and the question is marked resolved.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Commands Section -->
+    <section class="commands">
+        <div class="container">
+            <h2>Available Commands</h2>
+            <p class="subtitle">Control your question router with simple slash commands</p>
+
+            <div class="command-list">
+                <div class="command-item">
+                    <h4><code>/qr-stats</code></h4>
+                    <p>Display comprehensive statistics about questions in your workspace. Shows total questions asked, answered, unanswered, average response time, and current escalation settings.</p>
+                </div>
+
+                <div class="command-item">
+                    <h4><code>/qr-config</code></h4>
+                    <p>View and modify your workspace configuration. Adjust escalation timings (first and second escalation minutes) and change answer detection mode (emoji_only, thread_auto, or hybrid).</p>
+                </div>
+
+                <div class="command-item">
+                    <h4><code>/qr-help</code></h4>
+                    <p>Get help and documentation directly in Slack. Shows available commands, configuration options, and how to use the question router effectively.</p>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h4>💡 Pro Tip</h4>
+                <p>Use <code>/qr-stats</code> regularly to monitor your team's response times and identify patterns in question volume. This helps optimize your support coverage.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats/Capabilities -->
+    <section class="stats">
+        <div class="container">
+            <h2>Built for Performance</h2>
+            <p class="subtitle">Reliable, scalable, and efficient</p>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">Always Monitoring</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-number">30s</div>
+                    <div class="stat-label">Check Interval</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-number">∞</div>
+                    <div class="stat-label">Concurrent Questions</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">Answer Detection Modes</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Usage Guide -->
+    <section class="usage-guide">
+        <div class="container">
+            <h2>Usage Guide</h2>
+            <p class="subtitle">Get started in minutes</p>
+
+            <div class="usage-content">
+                <div class="usage-section">
+                    <h3><span>🚀</span> Getting Started</h3>
+                    <ul>
+                        <li>Install the Slack app in your workspace</li>
+                        <li>Invite the bot to channels you want to monitor (e.g., <code>/invite @unanswered_questions</code>)</li>
+                        <li>Configure your escalation settings using <code>/qr-config</code></li>
+                        <li>Set up your escalation channel (where second-level escalations are posted)</li>
+                        <li>Define your support user group (who gets mentioned in first escalations)</li>
+                    </ul>
+                </div>
+
+                <div class="usage-section">
+                    <h3><span>⚙️</span> Configuration</h3>
+                    <p>Set your environment variables or use the <code>/qr-config</code> command:</p>
+                    <div class="code-block">
+FIRST_ESCALATION_MINUTES=2    # Time until first escalation
+SECOND_ESCALATION_MINUTES=4   # Time until second escalation
+ESCALATION_USER_GROUP=t2      # User group to mention (@t2)
+ESCALATION_CHANNEL=C123456    # Channel ID for escalations
+                    </div>
+                </div>
+
+                <div class="usage-section">
+                    <h3><span>🎯</span> Answer Detection Modes</h3>
+                    <ul>
+                        <li><strong>emoji_only</strong> - Questions require a checkmark emoji (✅ or ✔️) reaction to mark as answered. Most precise control.</li>
+                        <li><strong>thread_auto</strong> - Any reply in the thread automatically marks the question as answered and stops escalation.</li>
+                        <li><strong>hybrid</strong> - Thread replies pause escalation but don't mark as complete. Still requires emoji for final resolution.</li>
+                    </ul>
+                </div>
+
+                <div class="usage-section">
+                    <h3><span>📈</span> Monitoring</h3>
+                    <ul>
+                        <li>Run <code>/qr-stats</code> to see your team's performance metrics</li>
+                        <li>Review average response times to identify bottlenecks</li>
+                        <li>Check unanswered question counts to gauge support load</li>
+                        <li>Monitor escalation patterns to optimize timing settings</li>
+                        <li>Track daily/weekly trends to improve support coverage</li>
+                    </ul>
+                </div>
+
+                <div class="usage-section">
+                    <h3><span>✨</span> Best Practices</h3>
+                    <ul>
+                        <li>Start with conservative escalation times (2 and 4 minutes) and adjust based on your team's response patterns</li>
+                        <li>Use <strong>emoji_only</strong> mode for high-stakes support channels where you need explicit confirmation</li>
+                        <li>Use <strong>thread_auto</strong> mode for casual discussion channels where any response indicates engagement</li>
+                        <li>Create a dedicated escalation channel (like #urgent-questions) with notifications enabled</li>
+                        <li>Review stats weekly to identify peak question times and adjust team coverage</li>
+                        <li>Train team members to use emoji reactions consistently</li>
+                    </ul>
+                </div>
+
+                <div class="info-box">
+                    <h4>🔐 Data & Privacy</h4>
+                    <p>All question data is stored securely in a PostgreSQL database. The bot only tracks message text, timestamps, and metadata necessary for escalation logic. No message content is shared with third parties.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Slack Question Router. Built with ❤️ for better team communication.</p>
+            <p style="margin-top: 10px; font-size: 0.9rem;">Node.js • TypeScript • Slack Bolt SDK • Prisma • PostgreSQL</p>
+        </div>
+    </footer>
+</body>
+</html>

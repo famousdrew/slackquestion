@@ -1,18 +1,18 @@
 /**
- * Configuration Command Handler
- * Allows admins to configure workspace settings
+ * Configuration Command Handler with Modal UI
+ * Allows admins to configure workspace settings via Slack modal
  */
 import { App } from '@slack/bolt';
-import { ensureWorkspace } from '../utils/db.js';
+import { ensureWorkspace, prisma } from '../utils/db.js';
 import {
   getWorkspaceConfig,
-  setAnswerDetectionMode,
   getAnswerDetectionModeDescription,
   type AnswerDetectionMode,
 } from '../services/configService.js';
 
 export function registerConfigCommand(app: App) {
-  app.command('/qr-config', async ({ command, ack, respond, client, logger }) => {
+  // Command handler - opens modal
+  app.command('/qr-config', async ({ command, ack, client, logger }) => {
     await ack();
 
     try {
@@ -21,69 +21,312 @@ export function registerConfigCommand(app: App) {
       const teamId = teamInfo.team?.id;
 
       if (!teamId) {
-        await respond('Error: Could not get team information');
-        return;
+        throw new Error('Could not get team information');
       }
 
       const workspace = await ensureWorkspace(teamId);
-      const args = command.text.trim().toLowerCase().split(/\s+/);
-      const subcommand = args[0];
+      const config = await getWorkspaceConfig(workspace.id);
 
-      // Show current config
-      if (!subcommand || subcommand === 'show') {
-        const config = await getWorkspaceConfig(workspace.id);
-        const modeDescription = getAnswerDetectionModeDescription(config.answerDetectionMode);
+      // Fetch user groups for the dropdown
+      const userGroupsResponse = await client.usergroups.list();
+      const userGroups = userGroupsResponse.usergroups || [];
 
-        await respond({
-          response_type: 'ephemeral',
-          text: `⚙️ *Current Configuration*\n\n` +
-            `*Answer Detection Mode:* \`${config.answerDetectionMode}\`\n` +
-            `${modeDescription}\n\n` +
-            `*Escalation Timing:*\n` +
-            `• First escalation: ${config.firstEscalationMinutes} minutes\n` +
-            `• Second escalation: ${config.secondEscalationMinutes} minutes\n\n` +
-            `*Commands:*\n` +
-            `• \`/qr-config answer-mode <mode>\` - Set answer detection mode\n` +
-            `  Available modes: \`emoji_only\`, \`thread_auto\`, \`hybrid\`\n` +
-            `• \`/qr-config show\` - Show current configuration`,
-        });
-        return;
-      }
-
-      // Set answer detection mode
-      if (subcommand === 'answer-mode') {
-        const mode = args[1] as AnswerDetectionMode;
-
-        if (!mode || !['emoji_only', 'thread_auto', 'hybrid'].includes(mode)) {
-          await respond({
-            response_type: 'ephemeral',
-            text: `❌ Invalid mode. Available modes:\n` +
-              `• \`emoji_only\` - Questions must be marked with ✅ emoji\n` +
-              `• \`thread_auto\` - Any reply marks question as answered\n` +
-              `• \`hybrid\` - Replies stop escalation, emoji required for stats`,
-          });
-          return;
-        }
-
-        await setAnswerDetectionMode(workspace.id, mode);
-        const modeDescription = getAnswerDetectionModeDescription(mode);
-
-        await respond({
-          response_type: 'ephemeral',
-          text: `✅ Answer detection mode updated to \`${mode}\`\n\n${modeDescription}`,
-        });
-        return;
-      }
-
-      // Unknown subcommand
-      await respond({
-        response_type: 'ephemeral',
-        text: `❌ Unknown command. Use \`/qr-config show\` to see available commands.`,
+      // Fetch public channels for the dropdown
+      const channelsResponse = await client.conversations.list({
+        types: 'public_channel',
+        exclude_archived: true,
+        limit: 1000,
       });
+      const channels = channelsResponse.channels || [];
 
+      // Open modal
+      await client.views.open({
+        trigger_id: command.trigger_id,
+        view: {
+          type: 'modal',
+          callback_id: 'config_modal',
+          title: {
+            type: 'plain_text',
+            text: 'Question Router Config',
+          },
+          submit: {
+            type: 'plain_text',
+            text: 'Save',
+          },
+          close: {
+            type: 'plain_text',
+            text: 'Cancel',
+          },
+          blocks: [
+            {
+              type: 'header',
+              text: {
+                type: 'plain_text',
+                text: '⚙️ Escalation Timing',
+              },
+            },
+            {
+              type: 'input',
+              block_id: 'first_escalation',
+              label: {
+                type: 'plain_text',
+                text: 'First Escalation (minutes)',
+              },
+              element: {
+                type: 'number_input',
+                action_id: 'first_escalation_input',
+                is_decimal_allowed: false,
+                initial_value: config.firstEscalationMinutes.toString(),
+                min_value: '1',
+                max_value: '1440',
+              },
+              hint: {
+                type: 'plain_text',
+                text: 'Time before posting in thread with user group mention',
+              },
+            },
+            {
+              type: 'input',
+              block_id: 'second_escalation',
+              label: {
+                type: 'plain_text',
+                text: 'Second Escalation (minutes)',
+              },
+              element: {
+                type: 'number_input',
+                action_id: 'second_escalation_input',
+                is_decimal_allowed: false,
+                initial_value: config.secondEscalationMinutes.toString(),
+                min_value: '1',
+                max_value: '1440',
+              },
+              hint: {
+                type: 'plain_text',
+                text: 'Time before posting to escalation channel',
+              },
+            },
+            {
+              type: 'divider',
+            },
+            {
+              type: 'header',
+              text: {
+                type: 'plain_text',
+                text: '👥 Escalation Targets',
+              },
+            },
+            {
+              type: 'input',
+              block_id: 'escalation_user_group',
+              optional: true,
+              label: {
+                type: 'plain_text',
+                text: 'User Group for First Escalation',
+              },
+              element: {
+                type: 'static_select',
+                action_id: 'user_group_select',
+                placeholder: {
+                  type: 'plain_text',
+                  text: 'Select a user group',
+                },
+                initial_option: config.escalationUserGroup
+                  ? {
+                      text: {
+                        type: 'plain_text',
+                        text:
+                          userGroups.find((ug) => ug.id === config.escalationUserGroup)?.name ||
+                          config.escalationUserGroup,
+                      },
+                      value: config.escalationUserGroup,
+                    }
+                  : undefined,
+                options: userGroups.map((ug) => ({
+                  text: {
+                    type: 'plain_text',
+                    text: `@${ug.handle} (${ug.name})`,
+                  },
+                  value: ug.id || '',
+                })),
+              },
+              hint: {
+                type: 'plain_text',
+                text: 'This user group will be mentioned in the thread',
+              },
+            },
+            {
+              type: 'input',
+              block_id: 'escalation_channel',
+              optional: true,
+              label: {
+                type: 'plain_text',
+                text: 'Channel for Second Escalation',
+              },
+              element: {
+                type: 'conversations_select',
+                action_id: 'channel_select',
+                default_to_current_conversation: false,
+                initial_conversation: config.escalationChannelId || undefined,
+                filter: {
+                  include: ['public'],
+                  exclude_bot_users: true,
+                },
+              },
+              hint: {
+                type: 'plain_text',
+                text: 'Unanswered questions will be posted here after second escalation time',
+              },
+            },
+            {
+              type: 'divider',
+            },
+            {
+              type: 'header',
+              text: {
+                type: 'plain_text',
+                text: '✅ Answer Detection',
+              },
+            },
+            {
+              type: 'input',
+              block_id: 'answer_mode',
+              label: {
+                type: 'plain_text',
+                text: 'Answer Detection Mode',
+              },
+              element: {
+                type: 'static_select',
+                action_id: 'answer_mode_select',
+                initial_option: {
+                  text: {
+                    type: 'plain_text',
+                    text: getModeLabel(config.answerDetectionMode as AnswerDetectionMode),
+                  },
+                  value: config.answerDetectionMode,
+                },
+                options: [
+                  {
+                    text: {
+                      type: 'plain_text',
+                      text: 'Emoji Only - Requires ✅ reaction',
+                    },
+                    value: 'emoji_only',
+                  },
+                  {
+                    text: {
+                      type: 'plain_text',
+                      text: 'Thread Auto - Any reply marks answered',
+                    },
+                    value: 'thread_auto',
+                  },
+                  {
+                    text: {
+                      type: 'plain_text',
+                      text: 'Hybrid - Replies pause, emoji completes',
+                    },
+                    value: 'hybrid',
+                  },
+                ],
+              },
+              hint: {
+                type: 'plain_text',
+                text: getAnswerDetectionModeDescription(config.answerDetectionMode),
+              },
+            },
+            {
+              type: 'context',
+              elements: [
+                {
+                  type: 'mrkdwn',
+                  text: '💡 *Tip:* Use emoji_only for precise control, thread_auto for casual channels, or hybrid for a balance.',
+                },
+              ],
+            },
+          ],
+        },
+      });
     } catch (error) {
-      logger.error('Error in config command:', error);
-      await respond('Error updating configuration. Please try again later.');
+      logger.error('Error opening config modal:', error);
     }
   });
+
+  // Modal submission handler
+  app.view('config_modal', async ({ ack, view, body, client, logger }) => {
+    await ack();
+
+    try {
+      const teamId = body.team?.id;
+      if (!teamId) {
+        throw new Error('Could not get team information');
+      }
+
+      const workspace = await ensureWorkspace(teamId);
+
+      // Extract values from the modal
+      const firstEscalation = parseInt(
+        view.state.values.first_escalation.first_escalation_input.value || '120'
+      );
+      const secondEscalation = parseInt(
+        view.state.values.second_escalation.second_escalation_input.value || '240'
+      );
+      const userGroup =
+        view.state.values.escalation_user_group.user_group_select.selected_option?.value || null;
+      const channel =
+        view.state.values.escalation_channel.channel_select.selected_conversation || null;
+      const answerMode =
+        (view.state.values.answer_mode.answer_mode_select.selected_option
+          ?.value as AnswerDetectionMode) || 'emoji_only';
+
+      // Update config in database
+      await prisma.workspaceConfig.upsert({
+        where: { workspaceId: workspace.id },
+        create: {
+          workspaceId: workspace.id,
+          firstEscalationMinutes: firstEscalation,
+          secondEscalationMinutes: secondEscalation,
+          escalationUserGroup: userGroup,
+          escalationChannelId: channel,
+          answerDetectionMode: answerMode,
+        },
+        update: {
+          firstEscalationMinutes: firstEscalation,
+          secondEscalationMinutes: secondEscalation,
+          escalationUserGroup: userGroup,
+          escalationChannelId: channel,
+          answerDetectionMode: answerMode,
+          updatedAt: new Date(),
+        },
+      });
+
+      // Send confirmation message
+      await client.chat.postEphemeral({
+        channel: body.user.id,
+        user: body.user.id,
+        text: `✅ Configuration updated successfully!\n\n` +
+          `*Escalation Timing:*\n` +
+          `• First: ${firstEscalation} minutes\n` +
+          `• Second: ${secondEscalation} minutes\n\n` +
+          `*Answer Mode:* ${getModeLabel(answerMode)}`,
+      });
+
+      console.log(
+        `✅ Config updated for workspace ${workspace.slackTeamId}: ${firstEscalation}/${secondEscalation} min, mode: ${answerMode}`
+      );
+    } catch (error) {
+      logger.error('Error saving config:', error);
+    }
+  });
+}
+
+function getModeLabel(mode: AnswerDetectionMode): string {
+  switch (mode) {
+    case 'emoji_only':
+      return 'Emoji Only - Requires ✅ reaction';
+    case 'thread_auto':
+      return 'Thread Auto - Any reply marks answered';
+    case 'hybrid':
+      return 'Hybrid - Replies pause, emoji completes';
+    default:
+      return mode;
+  }
 }

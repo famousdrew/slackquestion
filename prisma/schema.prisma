@@ -131,6 +131,8 @@ model WorkspaceConfig {
   dmSuggestionsEnabled      Boolean  @default(true) @map("dm_suggestions_enabled")
   threadPostsEnabled        Boolean  @default(true) @map("thread_posts_enabled")
   finalEscalationUserId     String?  @map("final_escalation_user_id")
+  escalationUserGroup       String?  @map("escalation_user_group")
+  escalationChannelId       String?  @map("escalation_channel_id")
   settings                  Json?
   createdAt                 DateTime @default(now()) @map("created_at")
   updatedAt                 DateTime @updatedAt @map("updated_at")
