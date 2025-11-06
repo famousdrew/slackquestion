@@ -247,6 +247,16 @@ export function registerConfigCommand(app: App) {
       });
     } catch (error) {
       logger.error('Error opening config modal:', error);
+      // Send error message to user
+      try {
+        await client.chat.postEphemeral({
+          channel: command.channel_id,
+          user: command.user_id,
+          text: `❌ Error opening config modal: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      } catch (ephemeralError) {
+        logger.error('Could not send ephemeral error message:', ephemeralError);
+      }
     }
   });
 
