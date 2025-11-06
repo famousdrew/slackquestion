@@ -100,13 +100,17 @@ export function registerMessageHandler(app: App) {
 
       logger.info(`Question stored with ID: ${question.id}`);
 
-      // Optional: React to the question to acknowledge detection (for testing)
-      if (process.env.ACKNOWLEDGE_QUESTIONS === 'true') {
+      // Add :question: emoji to acknowledge detection and signal tracking
+      try {
         await client.reactions.add({
           channel: channelId,
           timestamp: messageTs,
           name: 'question',
         });
+        logger.info('Added :question: reaction to message');
+      } catch (reactionError) {
+        // Reaction might fail if already added or permissions issue
+        logger.warn('Could not add reaction:', reactionError);
       }
 
     } catch (error) {
