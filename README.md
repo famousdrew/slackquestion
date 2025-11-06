@@ -6,13 +6,17 @@ A Slack bot that automatically detects questions in channels, tracks them, and e
 
 ### Core Functionality
 - **Automatic Question Detection**: Detects questions using natural language patterns (question marks, question words, help requests)
+- **Visual Feedback**: Adds ❓ emoji to detected questions for immediate acknowledgment
 - **Smart Tracking**: Stores all questions with metadata (asker, channel, timestamp, thread)
 - **Configurable Answer Detection**: Three modes for marking questions as answered
 - **Two-Tier Escalation System**:
   - First escalation: Posts in thread and mentions support group
   - Second escalation: Posts to dedicated escalation channel
+- **Modal Configuration UI**: Configure all settings through interactive Slack modal
+- **App Home Onboarding**: Guided setup for new users with configuration status dashboard
 - **Statistics Dashboard**: View question metrics via `/qr-stats` command
 - **Thread Filtering**: Only tracks top-level questions, ignores replies in threads
+- **Per-Workspace Settings**: Each workspace can configure its own escalation channels and user groups
 
 ### Answer Detection Modes
 
@@ -95,7 +99,7 @@ Choose how questions are marked as answered:
    Create these commands:
    - `/qr-test` - Test that the bot is running
    - `/qr-stats` - View question statistics
-   - `/qr-config` - Configure answer detection mode
+   - `/qr-config` - Open configuration modal (escalation settings, answer detection mode)
 
 7. **Install App to Workspace**
    - Go to "Install App" and click "Install to Workspace"
@@ -116,23 +120,23 @@ Choose how questions are marked as answered:
 
    Create `.env` file:
    ```env
-   # Slack Tokens
+   # Slack Tokens (Required)
    SLACK_BOT_TOKEN=xoxb-your-bot-token
    SLACK_SIGNING_SECRET=your-signing-secret
    SLACK_APP_TOKEN=xapp-your-app-token
 
-   # Database
+   # Database (Required)
    DATABASE_URL=postgresql://user:password@host:5432/database
 
-   # Escalation Settings
-   ESCALATION_USER_GROUP=t2                    # User group handle (without @)
-   ESCALATION_CHANNEL=GN9LYD9T4               # Channel ID for second escalation
-   FIRST_ESCALATION_MINUTES=2                 # Minutes before first escalation
-   SECOND_ESCALATION_MINUTES=4                # Minutes before second escalation
-
-   # Optional
-   ACKNOWLEDGE_QUESTIONS=false                # Add reaction to detected questions
+   # Default Escalation Settings (Optional - can be configured via /qr-config modal)
+   FIRST_ESCALATION_MINUTES=2                 # Default: 2 minutes
+   SECOND_ESCALATION_MINUTES=4                # Default: 4 minutes
+   ESCALATION_USER_GROUP=t2                   # Fallback if not set in modal
+   ESCALATION_CHANNEL=GN9LYD9T4               # Fallback if not set in modal
    ```
+
+   **Note**: Escalation settings are now configured per-workspace using the `/qr-config` modal.
+   Environment variables serve as fallback defaults.
 
 10. **Run Prisma Setup**
     ```bash
@@ -176,6 +180,25 @@ React with 🚫 or ⛔ if something was detected as a question but isn't.
 
 ### For Admins
 
+**Getting Started**
+Click on "Question Router" in your Slack apps to see the App Home with:
+- Configuration status (setup complete or needs attention)
+- Current settings summary
+- Quick access to configuration modal
+- How-to guide and available commands
+
+**Configure Settings**
+```
+/qr-config
+```
+Opens an interactive modal where you can configure:
+- **Escalation Timing**: First and second escalation minutes (1-1440)
+- **User Group**: Which user group to mention in first escalation
+- **Escalation Channel**: Public or private channel for second escalation alerts
+- **Answer Detection Mode**: Choose emoji_only, thread_auto, or hybrid
+
+All settings are saved per-workspace in the database.
+
 **View Statistics**
 ```
 /qr-stats
@@ -185,14 +208,6 @@ Shows:
 - Answered/unanswered counts
 - Average response time
 - Per-channel breakdown
-
-**Configure Answer Detection**
-```
-/qr-config show                      # Show current settings
-/qr-config answer-mode emoji_only   # Require emoji to mark answered
-/qr-config answer-mode thread_auto  # Any reply marks as answered
-/qr-config answer-mode hybrid       # Replies stop escalation, emoji for stats
-```
 
 **Finding Channel IDs**
 ```bash
@@ -214,7 +229,7 @@ node get-usergroups.js  # Lists all user groups with IDs
    - Question words (how, what, where, when, why, who, which)
    - Help patterns ("can someone", "does anyone know")
 3. **Stores question** in database with metadata
-4. **Acknowledges** (optional: adds ❓ reaction)
+4. **Visual feedback** - Adds ❓ emoji reaction to acknowledge detection
 
 ### Escalation Flow
 
@@ -264,9 +279,10 @@ Someone replies → Escalation stops (but not marked answered for stats)
 slackfquestion/
 ├── src/
 │   ├── commands/
-│   │   ├── configCommand.ts       # /qr-config command
+│   │   ├── configCommand.ts       # /qr-config modal UI
 │   │   └── statsCommand.ts        # /qr-stats command
 │   ├── events/
+│   │   ├── appHome.ts             # App Home tab & onboarding
 │   │   ├── messageHandler.ts      # Question detection
 │   │   └── reactionHandler.ts     # Answer marking
 │   ├── services/
@@ -281,9 +297,8 @@ slackfquestion/
 │   └── schema.prisma              # Database schema
 ├── get-channels.js                # Helper: list channels
 ├── get-usergroups.js              # Helper: list user groups
-├── init-database.sql              # Database setup
-├── enable-rls.sql                 # Supabase RLS setup
-└── add-answer-detection-mode.sql  # Migration for config feature
+├── check-question.js              # Helper: debug questions
+└── portfolio-page.html            # Public info page
 ```
 
 ## Database Schema
@@ -308,11 +323,12 @@ See `prisma/schema.prisma` for full schema.
 | `SLACK_SIGNING_SECRET` | Yes | - | Signing secret from Slack app |
 | `SLACK_APP_TOKEN` | Yes | - | App-level token (xapp-...) |
 | `DATABASE_URL` | Yes | - | PostgreSQL connection string |
-| `ESCALATION_USER_GROUP` | Yes | - | User group handle for first escalation |
-| `ESCALATION_CHANNEL` | Yes | - | Channel ID for second escalation |
-| `FIRST_ESCALATION_MINUTES` | No | 2 | Minutes before first escalation |
-| `SECOND_ESCALATION_MINUTES` | No | 4 | Minutes before second escalation |
-| `ACKNOWLEDGE_QUESTIONS` | No | false | Add ❓ reaction to detected questions |
+| `FIRST_ESCALATION_MINUTES` | No | 2 | Default minutes before first escalation |
+| `SECOND_ESCALATION_MINUTES` | No | 4 | Default minutes before second escalation |
+| `ESCALATION_USER_GROUP` | No | - | Fallback user group handle |
+| `ESCALATION_CHANNEL` | No | - | Fallback channel ID |
+
+**Note**: Escalation targets (user group and channel) are now configured per-workspace via `/qr-config` modal. Environment variables serve as fallback defaults only.
 
 ### Channel Monitoring
 
@@ -431,8 +447,11 @@ See `SCALING.md` for comprehensive SaaS strategy.
 
 **Phase 1: Configuration System** ✅
 - [x] Three answer detection modes
-- [x] `/qr-config` command
 - [x] Per-workspace settings
+- [x] Modal-based configuration UI
+- [x] App Home onboarding experience
+- [x] Private channel support
+- [x] Visual question detection feedback
 
 **Phase 2: Enhanced Analytics** (Next)
 - [ ] Web dashboard
