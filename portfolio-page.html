@@ -377,7 +377,7 @@
                 <div class="feature-card">
                     <div class="feature-icon">🔧</div>
                     <h3>Easy Configuration</h3>
-                    <p>Simple slash commands to adjust escalation timings, answer detection modes, and channel monitoring. No complex setup required.</p>
+                    <p>Beautiful modal interface for all settings. Choose any user group, any channel, and custom timing. Per-workspace configuration means every team gets exactly what they need.</p>
                 </div>
 
                 <div class="feature-card">
@@ -437,7 +437,7 @@
 
                 <div class="command-item">
                     <h4><code>/qr-config</code></h4>
-                    <p>View and modify your workspace configuration. Adjust escalation timings (first and second escalation minutes) and change answer detection mode (emoji_only, thread_auto, or hybrid).</p>
+                    <p>Opens an interactive modal to configure all settings. Adjust escalation timing, select user groups and channels from dropdowns, and choose answer detection mode. All changes are saved per workspace with instant validation.</p>
                 </div>
 
                 <div class="command-item">
@@ -495,20 +495,27 @@
                     <ul>
                         <li>Install the Slack app in your workspace</li>
                         <li>Invite the bot to channels you want to monitor (e.g., <code>/invite @unanswered_questions</code>)</li>
-                        <li>Configure your escalation settings using <code>/qr-config</code></li>
-                        <li>Set up your escalation channel (where second-level escalations are posted)</li>
-                        <li>Define your support user group (who gets mentioned in first escalations)</li>
+                        <li>Run <code>/qr-config</code> to open the configuration modal</li>
+                        <li>Set your escalation timing (how long to wait before each alert)</li>
+                        <li>Select which user group to notify for first escalations</li>
+                        <li>Choose which channel receives second escalation alerts</li>
+                        <li>Pick your preferred answer detection mode</li>
+                        <li>Save and start monitoring! Questions are now being tracked automatically</li>
                     </ul>
                 </div>
 
                 <div class="usage-section">
                     <h3><span>⚙️</span> Configuration</h3>
-                    <p>Set your environment variables or use the <code>/qr-config</code> command:</p>
-                    <div class="code-block">
-FIRST_ESCALATION_MINUTES=2    # Time until first escalation
-SECOND_ESCALATION_MINUTES=4   # Time until second escalation
-ESCALATION_USER_GROUP=t2      # User group to mention (@t2)
-ESCALATION_CHANNEL=C123456    # Channel ID for escalations
+                    <p>Configure everything through an intuitive Slack modal using the <code>/qr-config</code> command:</p>
+                    <ul>
+                        <li><strong>Escalation Timing</strong> - Set custom minutes for both first and second escalation (1-1440 minutes)</li>
+                        <li><strong>User Group Selection</strong> - Choose any user group from your workspace to mention in first escalations</li>
+                        <li><strong>Escalation Channel</strong> - Pick any public channel for second-level escalation alerts</li>
+                        <li><strong>Answer Detection Mode</strong> - Select emoji-only, thread-auto, or hybrid based on your workflow</li>
+                    </ul>
+                    <div class="info-box">
+                        <h4>🎯 Fully Customizable</h4>
+                        <p>All escalation points are configurable per workspace. No hardcoded channels or user groups - choose what works best for your team structure.</p>
                     </div>
                 </div>
 
