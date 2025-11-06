@@ -2,6 +2,7 @@ import { App } from '@slack/bolt';
 import dotenv from 'dotenv';
 import { registerMessageHandler } from './events/messageHandler.js';
 import { registerReactionHandler } from './events/reactionHandler.js';
+import { registerAppHomeHandler } from './events/appHome.js';
 import { registerStatsCommand } from './commands/statsCommand.js';
 import { registerConfigCommand } from './commands/configCommand.js';
 import { disconnectDb } from './utils/db.js';
@@ -32,6 +33,7 @@ app.event(/.*/, async ({ event, logger }) => {
 // Register event handlers
 registerMessageHandler(app);
 registerReactionHandler(app);
+registerAppHomeHandler(app);
 
 // Register commands
 registerStatsCommand(app);
