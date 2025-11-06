@@ -24,9 +24,7 @@
   "dependencies": {
     "@prisma/client": "^6.18.0",
     "@slack/bolt": "^4.6.0",
-    "bullmq": "^5.63.0",
-    "dotenv": "^17.2.3",
-    "ioredis": "^5.8.2"
+    "dotenv": "^17.2.3"
   },
   "devDependencies": {
     "@types/node": "^24.10.0",
