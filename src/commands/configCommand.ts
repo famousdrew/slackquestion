@@ -31,9 +31,9 @@ export function registerConfigCommand(app: App) {
       const userGroupsResponse = await client.usergroups.list();
       const userGroups = userGroupsResponse.usergroups || [];
 
-      // Fetch public channels for the dropdown
+      // Fetch public and private channels for the dropdown
       const channelsResponse = await client.conversations.list({
-        types: 'public_channel',
+        types: 'public_channel,private_channel',
         exclude_archived: true,
         limit: 1000,
       });
@@ -168,13 +168,13 @@ export function registerConfigCommand(app: App) {
                 default_to_current_conversation: false,
                 initial_conversation: config.escalationChannelId || undefined,
                 filter: {
-                  include: ['public'],
+                  include: ['public', 'private'],
                   exclude_bot_users: true,
                 },
               },
               hint: {
                 type: 'plain_text',
-                text: 'Unanswered questions will be posted here after second escalation time',
+                text: 'Public or private channel where unanswered questions will be escalated',
               },
             },
             {
