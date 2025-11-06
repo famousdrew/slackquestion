@@ -131,23 +131,37 @@ export function registerConfigCommand(app: App) {
                   text: 'Select a user group',
                 },
                 initial_option: config.escalationUserGroup
-                  ? {
-                      text: {
-                        type: 'plain_text',
-                        text:
-                          userGroups.find((ug) => ug.id === config.escalationUserGroup)?.name ||
-                          config.escalationUserGroup,
-                      },
-                      value: config.escalationUserGroup,
-                    }
+                  ? (() => {
+                      const selectedGroup = userGroups.find((ug) => ug.id === config.escalationUserGroup);
+                      return selectedGroup
+                        ? {
+                            text: {
+                              type: 'plain_text',
+                              text: `@${selectedGroup.handle} (${selectedGroup.name})`,
+                            },
+                            value: selectedGroup.id || '',
+                          }
+                        : undefined;
+                    })()
                   : undefined,
-                options: userGroups.map((ug) => ({
-                  text: {
-                    type: 'plain_text',
-                    text: `@${ug.handle} (${ug.name})`,
-                  },
-                  value: ug.id || '',
-                })),
+                options:
+                  userGroups.length > 0
+                    ? userGroups.map((ug) => ({
+                        text: {
+                          type: 'plain_text',
+                          text: `@${ug.handle} (${ug.name})`,
+                        },
+                        value: ug.id || '',
+                      }))
+                    : [
+                        {
+                          text: {
+                            type: 'plain_text',
+                            text: 'No user groups available',
+                          },
+                          value: 'none',
+                        },
+                      ],
               },
               hint: {
                 type: 'plain_text',
@@ -279,8 +293,9 @@ export function registerConfigCommand(app: App) {
       const secondEscalation = parseInt(
         view.state.values.second_escalation.second_escalation_input.value || '240'
       );
-      const userGroup =
+      const userGroupValue =
         view.state.values.escalation_user_group.user_group_select.selected_option?.value || null;
+      const userGroup = userGroupValue === 'none' ? null : userGroupValue;
       const channel =
         view.state.values.escalation_channel.channel_select.selected_conversation || null;
       const answerMode =
