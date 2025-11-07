@@ -85,6 +85,9 @@ npm run prisma:migrate
 
 When prompted for a migration name, use: `init`
 
+**⚠️ Important for existing databases:**
+If you're connecting to an existing Supabase database (not a fresh setup), you may need to run an additional migration. See [MIGRATIONS.md](./MIGRATIONS.md) for details.
+
 ### 5. Run the Bot
 
 ```bash
@@ -153,9 +156,17 @@ npm run prisma:studio
 - Make sure the bot is invited to the channel (`/invite @Question Router`)
 
 ### Database errors
+
+**Error: "The column `workspace_config.migrated_to_targets` does not exist"**
+- This means you need to run a database migration
+- See [MIGRATIONS.md](./MIGRATIONS.md) for the fix (takes < 1 second)
+- Quick fix: Run the SQL in `migration-add-migrated-to-targets.sql` on your database
+
+**Other database issues:**
 - Verify `DATABASE_URL` is correct
 - Make sure migrations ran successfully: `npm run prisma:migrate`
 - Check database is accessible
+- Try `npx prisma db push` to sync schema
 
 ### Socket mode errors
 - Verify `SLACK_APP_TOKEN` is an app-level token

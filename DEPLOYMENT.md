@@ -4,7 +4,7 @@ This guide covers deploying Slack Question Router to production hosting.
 
 ---
 
-## <¯ Quick Start (Railway - Recommended)
+## <ï¿½ Quick Start (Railway - Recommended)
 
 **Total Time:** 15-20 minutes
 **Cost:** ~$10-20/month
@@ -39,7 +39,7 @@ git push -u origin main
 
 ### Step 3: Add Environment Variables
 
-In Railway dashboard ’ Variables tab, add these:
+In Railway dashboard ï¿½ Variables tab, add these:
 
 ```
 SLACK_BOT_TOKEN=xoxb-your-token-here
@@ -68,6 +68,31 @@ npm install && npx prisma generate && npm run build
 npm run start
 ```
 
+### Step 4.5: Run Database Migration (CRITICAL!)
+
+**âš ï¸ IMPORTANT:** Before deploying, you MUST run a database migration or the app will crash!
+
+The schema expects a `migrated_to_targets` column that may not exist in your database yet.
+
+**Quick Fix (takes < 1 second):**
+
+1. Go to your **Supabase Dashboard** â†’ **SQL Editor**
+2. Run this SQL:
+
+```sql
+ALTER TABLE workspace_config
+ADD COLUMN IF NOT EXISTS migrated_to_targets BOOLEAN NOT NULL DEFAULT false;
+```
+
+3. Verify it worked (you should see: `migrated_to_targets | boolean | false`)
+
+**Why this is needed:** The escalation engine checks this column at startup. Without it, you'll see errors like:
+```
+The column `workspace_config.migrated_to_targets` does not exist in the current database.
+```
+
+ðŸ“– **For more details, see [MIGRATIONS.md](./MIGRATIONS.md)**
+
 ### Step 5: Deploy!
 
 Railway will automatically build and deploy. Watch the logs:
@@ -78,11 +103,11 @@ Railway will automatically build and deploy. Watch the logs:
 
 **Expected output:**
 ```
-¡ Slack Question Router is running in Socket Mode!
-=Ê Question detection is active
-=¾ Database connected
+ï¿½ Slack Question Router is running in Socket Mode!
+=ï¿½ Question detection is active
+=ï¿½ Database connected
  Connected to Slack workspace: Your Workspace
-=¨ Starting escalation engine...
+=ï¿½ Starting escalation engine...
 ```
 
 ### Step 6: Verify It's Working
@@ -96,7 +121,7 @@ Railway will automatically build and deploy. Watch the logs:
 
 ---
 
-## =Ê Monitoring Your Deployment
+## =ï¿½ Monitoring Your Deployment
 
 ### Railway Built-in Monitoring
 
@@ -118,10 +143,10 @@ Railway dashboard shows:
 
 **Warning Signs:**
 ```
-  "Connection error" repeatedly
-  "Database error" messages
-  Service keeps restarting
-  High memory usage (>80% of allocated)
+ï¿½ "Connection error" repeatedly
+ï¿½ "Database error" messages
+ï¿½ Service keeps restarting
+ï¿½ High memory usage (>80% of allocated)
 ```
 
 ---
@@ -163,7 +188,7 @@ README.md
 
 ---
 
-## =° Cost Breakdown
+## =ï¿½ Cost Breakdown
 
 ### Railway Pricing
 
@@ -190,14 +215,14 @@ Already set up, you're paying:
 
 ---
 
-## =€ Alternative Option: Render.com
+## =ï¿½ Alternative Option: Render.com
 
 If you prefer Render over Railway:
 
 ### Render Setup
 
 1. Go to https://render.com
-2. Click "New +" ’ "Web Service"
+2. Click "New +" ï¿½ "Web Service"
 3. Connect GitHub repository
 4. Configure:
    - **Name**: slack-question-router
@@ -247,7 +272,7 @@ git push origin main
 1. Check Railway logs for exact error
 2. Verify `SLACK_APP_TOKEN` is correct (starts with `xapp-`)
 3. Ensure Socket Mode is enabled in Slack app settings
-4. Restart deployment: Railway dashboard ’ "Restart"
+4. Restart deployment: Railway dashboard ï¿½ "Restart"
 
 ### Database Errors
 
@@ -290,15 +315,15 @@ git push origin main
 **Solution**:
 1. Add more logging to your code:
    ```typescript
-   console.log('=€ Bot starting...');
-   console.log('=Ê Environment:', process.env.NODE_ENV);
+   console.log('=ï¿½ Bot starting...');
+   console.log('=ï¿½ Environment:', process.env.NODE_ENV);
    ```
-2. Check "Deployments" ’ "Logs" tab (not "Observability")
+2. Check "Deployments" ï¿½ "Logs" tab (not "Observability")
 3. Ensure `console.log` statements aren't being filtered
 
 ---
 
-## =È Scaling Beyond Initial Deployment
+## =ï¿½ Scaling Beyond Initial Deployment
 
 ### When You Reach 50-100 Customers
 
@@ -361,7 +386,7 @@ Before going to production:
 
 ---
 
-## =Ë Pre-Deployment Checklist
+## =ï¿½ Pre-Deployment Checklist
 
 - [ ] Code pushed to GitHub
 - [ ] Railway/Render account created
@@ -375,23 +400,23 @@ Before going to production:
 
 ---
 
-## <‰ Post-Deployment Checklist
+## <ï¿½ Post-Deployment Checklist
 
 - [ ] Service is running (Railway shows green status)
 - [ ] Logs show "Connected to Slack workspace"
-- [ ] Post test question in Slack ’ bot detects it
-- [ ] Wait 2 min ’ first escalation fires
-- [ ] Wait 2 more min ’ second escalation fires
-- [ ] Mark question as answered ’ stops escalating
+- [ ] Post test question in Slack ï¿½ bot detects it
+- [ ] Wait 2 min ï¿½ first escalation fires
+- [ ] Wait 2 more min ï¿½ second escalation fires
+- [ ] Mark question as answered ï¿½ stops escalating
 - [ ] `/qr-stats` command works
 - [ ] Check Railway metrics (CPU, RAM reasonable)
 - [ ] Set up uptime monitoring (Optional: UptimeRobot free)
 - [ ] Add Railway deployment URL to README
-- [ ] Celebrate! <Š
+- [ ] Celebrate! <ï¿½
 
 ---
 
-## =¡ Pro Tips
+## =ï¿½ Pro Tips
 
 1. **Use Railway's CLI for debugging**
    ```bash
@@ -403,7 +428,7 @@ Before going to production:
    ```
 
 2. **Set up deployment notifications**
-   - Railway ’ Settings ’ Notifications
+   - Railway ï¿½ Settings ï¿½ Notifications
    - Get Slack/email alerts when deployments fail
 
 3. **Create staging environment**
@@ -412,7 +437,7 @@ Before going to production:
    - Test changes before production
 
 4. **Monitor costs**
-   - Railway ’ Usage tab shows daily costs
+   - Railway ï¿½ Usage tab shows daily costs
    - Set up billing alerts at $50, $100
    - Review monthly to optimize
 

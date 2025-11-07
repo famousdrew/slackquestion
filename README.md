@@ -692,13 +692,20 @@ For questions or issues:
 
 ## Recent Updates
 
-### November 7, 2024 - Build Fixes ✅
-- **Fixed TypeScript compilation errors**:
-  - Removed duplicate shutdown handlers in `src/index.ts`
-  - Fixed Block Kit type inference in App Home (`src/events/appHome.ts`)
-  - Added proper type casting for Prisma enum types in escalation engine
+### November 7, 2024 - Build Fixes & Database Migration ✅
+
+**TypeScript Build Errors Fixed:**
+- Removed duplicate shutdown handlers in `src/index.ts`
+- Fixed Block Kit type inference in App Home (`src/events/appHome.ts`)
+- Added proper type casting for Prisma enum types in escalation engine
 - **Build Status**: All TypeScript errors resolved, project compiles successfully
-- **Testing**: Run `npm run build` to verify
+
+**Database Migration Added:**
+- Created migration SQL for missing `migrated_to_targets` column
+- Added comprehensive [MIGRATIONS.md](./MIGRATIONS.md) guide
+- Updated [DEPLOYMENT.md](./DEPLOYMENT.md) with migration step
+- Updated [SETUP.md](./SETUP.md) with troubleshooting
+- **Action Required**: Run migration on your database (see warning at top of README)
 
 ### Current Implementation Status
 - ✅ Question detection and tracking
