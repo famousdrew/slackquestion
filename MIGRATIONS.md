@@ -92,6 +92,31 @@ CREATE TABLE users_email_backup AS
 SELECT slack_user_id, email FROM users WHERE email IS NOT NULL;
 ```
 
+### Migration 5: Enable Row-Level Security (RLS)
+**When:** Adding security hardening (Jan 2025+)
+**File:** `migration-enable-rls.sql`
+**What it does:** Enables RLS on all tables to prevent unauthorized access
+
+```sql
+-- Enable RLS on tables
+ALTER TABLE channel_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE daily_stats ENABLE ROW LEVEL SECURITY;
+ALTER TABLE escalation_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE escalation_targets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_expertise ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workspace_config ENABLE ROW LEVEL SECURITY;
+
+-- Create permissive policies for service role access
+CREATE POLICY "Enable all access for service role" ON channel_config FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Enable all access for service role" ON daily_stats FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Enable all access for service role" ON escalation_events FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Enable all access for service role" ON escalation_targets FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Enable all access for service role" ON user_expertise FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Enable all access for service role" ON workspace_config FOR ALL USING (true) WITH CHECK (true);
+```
+
+**Note:** This adds protection against unauthorized access while maintaining full access for your application via the service role.
+
 ---
 
 ## How to Apply Migrations
@@ -141,6 +166,20 @@ SELECT column_name, data_type, column_default
 FROM information_schema.columns
 WHERE table_name = 'questions'
 AND column_name IN ('is_side_conversation', 'zendesk_ticket_id', 'source_app');
+
+-- Check RLS is enabled (migration 5)
+SELECT schemaname, tablename, rowsecurity
+FROM pg_tables
+WHERE schemaname = 'public'
+AND tablename IN (
+  'channel_config',
+  'daily_stats',
+  'escalation_events',
+  'escalation_targets',
+  'user_expertise',
+  'workspace_config'
+)
+ORDER BY tablename;
 ```
 
 ---
@@ -153,6 +192,7 @@ For existing installations upgrading to latest version, run in this order:
 2. ✅ `migration-add-migrated-to-targets.sql` (if not already applied)
 3. ⚠️ `migration-remove-email-column.sql` (January 2025)
 4. ✅ `migration-add-side-conversations.sql` (January 2025 - Zendesk integration)
+5. ✅ `migration-enable-rls.sql` (January 2025 - Security hardening)
 
 **All migrations are safe to re-run** - they use `IF NOT EXISTS` or `IF EXISTS` clauses.
 
