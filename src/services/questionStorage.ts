@@ -13,6 +13,9 @@ export interface StoreQuestionParams {
   slackThreadId?: string;
   messageText: string;
   askedAt: Date;
+  isSideConversation?: boolean;
+  zendeskTicketId?: string | null;
+  sourceApp?: string;
 }
 
 /**
@@ -33,6 +36,9 @@ export async function storeQuestion(params: StoreQuestionParams) {
       askedAt: params.askedAt,
       status: 'unanswered',
       escalationLevel: 0,
+      isSideConversation: params.isSideConversation || false,
+      zendeskTicketId: params.zendeskTicketId || null,
+      sourceApp: params.sourceApp || 'slack',
     },
   });
 }

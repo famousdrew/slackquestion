@@ -63,6 +63,23 @@ ADD COLUMN IF NOT EXISTS migrated_to_targets BOOLEAN NOT NULL DEFAULT false;
 **File:** `migration-remove-email-column.sql`
 **What it does:** Removes email addresses from users table (privacy improvement)
 
+### Migration 4: Zendesk Side Conversations
+**When:** Adding Zendesk side conversation tracking (Jan 2025+)
+**File:** `migration-add-side-conversations.sql`
+**What it does:** Adds fields to track questions from Zendesk side conversations
+
+```sql
+ALTER TABLE questions
+  ADD COLUMN IF NOT EXISTS is_side_conversation BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS zendesk_ticket_id TEXT,
+  ADD COLUMN IF NOT EXISTS source_app TEXT DEFAULT 'slack';
+
+CREATE INDEX IF NOT EXISTS idx_questions_side_conversation
+  ON questions(is_side_conversation, status, asked_at);
+```
+
+### Migration 3 (Continued): Remove Email Column ⚠️
+
 ```sql
 ALTER TABLE users DROP COLUMN IF EXISTS email;
 ```
@@ -118,6 +135,12 @@ WHERE table_name = 'workspace_config' AND column_name = 'migrated_to_targets';
 -- Check if email column exists (should NOT exist after migration 3)
 SELECT column_name FROM information_schema.columns
 WHERE table_name = 'users' AND column_name = 'email';
+
+-- Check for side conversation columns (migration 4)
+SELECT column_name, data_type, column_default
+FROM information_schema.columns
+WHERE table_name = 'questions'
+AND column_name IN ('is_side_conversation', 'zendesk_ticket_id', 'source_app');
 ```
 
 ---
@@ -128,7 +151,8 @@ For existing installations upgrading to latest version, run in this order:
 
 1. ✅ `add-answer-detection-mode.sql` (if not already applied)
 2. ✅ `migration-add-migrated-to-targets.sql` (if not already applied)
-3. ⚠️ `migration-remove-email-column.sql` (latest - January 2025)
+3. ⚠️ `migration-remove-email-column.sql` (January 2025)
+4. ✅ `migration-add-side-conversations.sql` (January 2025 - Zendesk integration)
 
 **All migrations are safe to re-run** - they use `IF NOT EXISTS` or `IF EXISTS` clauses.
 
