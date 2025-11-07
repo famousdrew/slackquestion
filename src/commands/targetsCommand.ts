@@ -366,13 +366,16 @@ export function registerTargetsCommand(app: App) {
       }
 
       if (!targetId) {
-        throw new Error('No target selected');
+        const typeLabel =
+          targetType === 'user' ? 'user' :
+          targetType === 'user_group' ? 'user group' : 'channel';
+        throw new Error(`Please select a ${typeLabel} from the dropdown before submitting.`);
       }
 
       // Validate the target
       const validation = await validateTarget(client, targetType, targetId);
       if (!validation.valid) {
-        throw new Error(validation.error || 'Invalid target');
+        throw new Error(validation.error || 'Could not validate the selected target. Please try again.');
       }
 
       // Add the target

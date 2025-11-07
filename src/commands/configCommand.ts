@@ -352,6 +352,16 @@ export function registerConfigCommand(app: App) {
       );
     } catch (error) {
       logger.error('Error saving config:', error);
+      // Send error notification to user
+      try {
+        await client.chat.postEphemeral({
+          channel: body.user.id,
+          user: body.user.id,
+          text: `❌ Failed to save configuration: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or contact support.`,
+        });
+      } catch (ephemeralError) {
+        logger.error('Could not send ephemeral error message:', ephemeralError);
+      }
     }
   });
 }
