@@ -117,6 +117,28 @@ CREATE POLICY "Enable all access for service role" ON workspace_config FOR ALL U
 
 **Note:** This adds protection against unauthorized access while maintaining full access for your application via the service role.
 
+### Migration 6: Stack Overflow Style Answer Marking
+**When:** Adding thread-reply answer marking (Jan 2025+)
+**File:** `migration-add-answer-message-tracking.sql`
+**What it does:** Tracks which specific thread reply was marked as the answer
+
+```sql
+-- Add column to track which message in thread was marked as the answer
+ALTER TABLE questions
+  ADD COLUMN IF NOT EXISTS answer_slack_message_id TEXT;
+
+-- Add index for performance
+CREATE INDEX IF NOT EXISTS idx_questions_answer_message
+  ON questions(answer_slack_message_id)
+  WHERE answer_slack_message_id IS NOT NULL;
+```
+
+**Features enabled:**
+- Question askers can mark specific thread replies as the answer (✅, 🎯, 🙏)
+- Reply author gets credit instead of the person who added the reaction
+- Zendesk side conversations: Extracts real asker name from message for proper attribution
+- Maintains backward compatibility: anyone can still mark the original message
+
 ---
 
 ## How to Apply Migrations
@@ -180,6 +202,12 @@ AND tablename IN (
   'workspace_config'
 )
 ORDER BY tablename;
+
+-- Check for answer message tracking (migration 6)
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_name = 'questions'
+AND column_name = 'answer_slack_message_id';
 ```
 
 ---
@@ -193,6 +221,7 @@ For existing installations upgrading to latest version, run in this order:
 3. ⚠️ `migration-remove-email-column.sql` (January 2025)
 4. ✅ `migration-add-side-conversations.sql` (January 2025 - Zendesk integration)
 5. ✅ `migration-enable-rls.sql` (January 2025 - Security hardening)
+6. ✅ `migration-add-answer-message-tracking.sql` (January 2025 - Stack Overflow style answers)
 
 **All migrations are safe to re-run** - they use `IF NOT EXISTS` or `IF EXISTS` clauses.
 

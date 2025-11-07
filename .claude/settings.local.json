@@ -19,7 +19,14 @@
       "Bash(npx prisma generate:*)",
       "Bash(del nul 2)",
       "Bash(nul)",
-      "Bash(start pricing-page-mockup.html)"
+      "Bash(start pricing-page-mockup.html)",
+      "WebSearch",
+      "WebFetch(domain:developer.zendesk.com)",
+      "WebFetch(domain:support.zendesk.com)",
+      "Bash(railway --version:*)",
+      "Bash(railway logs:*)",
+      "Bash(railway link:*)",
+      "Bash(railway service:*)"
     ],
     "deny": [],
     "ask": []

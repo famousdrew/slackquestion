@@ -61,10 +61,15 @@ export async function questionExists(
 
 /**
  * Mark a question as answered
+ * @param questionId - Question ID
+ * @param answererId - User ID of the answerer
+ * @param answerSlackMessageId - Optional: Slack message ID of the answer (for thread replies)
+ * @param answeredAt - Timestamp when answered
  */
 export async function markQuestionAnswered(
   questionId: string,
   answererId: string,
+  answerSlackMessageId?: string,
   answeredAt: Date = new Date()
 ) {
   return await prisma.question.update({
@@ -72,6 +77,7 @@ export async function markQuestionAnswered(
     data: {
       status: 'answered',
       answererId,
+      answerSlackMessageId: answerSlackMessageId || null,
       answeredAt,
     },
   });

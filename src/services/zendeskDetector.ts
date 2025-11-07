@@ -88,6 +88,22 @@ export function extractZendeskTicketId(text: string): string | null {
 }
 
 /**
+ * Extract the asker's name from Zendesk side conversation message
+ * Looks for pattern: "Name in ticket #12345:"
+ * @param text - Message text from Zendesk side conversation
+ * @returns Asker's name if found, null otherwise
+ */
+export function extractAskerName(text: string): string | null {
+  // Pattern: "Drew Clark in ticket #123:"
+  // The name appears before " in ticket "
+  const match = text.match(/^([^:]+?)\s+in\s+ticket\s+#\d+:/i);
+  if (match) {
+    return match[1].trim();
+  }
+  return null;
+}
+
+/**
  * Get the Zendesk bot's user ID for a workspace
  * Used as the "asker" for side conversation questions
  * @param teamId - Workspace team ID

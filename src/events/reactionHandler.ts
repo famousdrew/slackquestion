@@ -29,11 +29,39 @@ export function registerReactionHandler(app: App) {
 
       const workspace = await ensureWorkspace(teamId);
 
-      // Find the question
-      const question = await findQuestionByMessageId(workspace.id, messageTs);
+      // Find the question - check if this message is a tracked question
+      let question = await findQuestionByMessageId(workspace.id, messageTs);
+
+      // If not found, check if this is a reply in a question thread
+      let isThreadReply = false;
+      let replyMessageTs: string | null = null;
 
       if (!question) {
-        // Not a tracked question
+        // Try to fetch the message to see if it's part of a thread
+        try {
+          const messageResult = await client.conversations.history({
+            channel: channelId,
+            latest: messageTs,
+            inclusive: true,
+            limit: 1
+          });
+
+          const message = messageResult.messages?.[0];
+          if (message && message.thread_ts && message.thread_ts !== messageTs) {
+            // This is a threaded reply, look for question by thread_ts
+            question = await findQuestionByMessageId(workspace.id, message.thread_ts);
+            if (question) {
+              isThreadReply = true;
+              replyMessageTs = messageTs;
+            }
+          }
+        } catch (error) {
+          logger.warn('Could not fetch message details:', error);
+        }
+      }
+
+      if (!question) {
+        // Not a tracked question or reply in a question thread
         return;
       }
 
@@ -42,12 +70,69 @@ export function registerReactionHandler(app: App) {
         return;
       }
 
-      // Handle different reactions
-      switch (reaction) {
-        case 'white_check_mark':
-        case 'heavy_check_mark':
-        case 'ballot_box_with_check':
-          // Mark as answered - anyone can mark it
+      // Handle answer marking reactions (✅, 🎯, 🙏)
+      const answerReactions = ['white_check_mark', 'heavy_check_mark', 'ballot_box_with_check', 'dart', 'pray'];
+
+      if (answerReactions.includes(reaction)) {
+        // Check if this is a thread reply
+        if (isThreadReply && replyMessageTs) {
+          // Thread reply - only allow asker to mark
+          if (user !== question.asker.slackUserId) {
+            logger.info(`User ${user} is not the asker, ignoring thread reply marking`);
+            return;
+          }
+
+          // Fetch the reply message to get the author
+          try {
+            const replyResult = await client.conversations.replies({
+              channel: channelId,
+              ts: replyMessageTs,
+              inclusive: true,
+              limit: 1
+            });
+
+            const replyMessage = replyResult.messages?.[0];
+            if (!replyMessage) {
+              logger.warn('Could not fetch reply message');
+              return;
+            }
+
+            // Skip if reply is from a bot
+            if (replyMessage.bot_id) {
+              logger.info('Reply is from a bot, ignoring');
+              return;
+            }
+
+            const replyAuthorId = replyMessage.user;
+
+            // Skip if message has no author
+            if (!replyAuthorId) {
+              logger.warn('Reply message has no author');
+              return;
+            }
+
+            // Skip if asker is marking their own reply
+            if (replyAuthorId === question.asker.slackUserId) {
+              logger.info('Asker cannot mark their own reply as answer');
+              return;
+            }
+
+            // Get reply author info
+            const authorInfo = await client.users.info({ user: replyAuthorId });
+            const authorData = {
+              displayName: authorInfo.user?.profile?.display_name || authorInfo.user?.name,
+              realName: authorInfo.user?.profile?.real_name,
+            };
+            const answerUser = await ensureUser(workspace.id, replyAuthorId, authorData);
+
+            // Mark as answered with the reply author and message ID
+            await markQuestionAnswered(question.id, answerUser.id, replyMessageTs);
+            logger.info(`Question ${question.id} marked as answered by ${replyAuthorId} (thread reply)`);
+          } catch (error) {
+            logger.error('Error processing thread reply answer:', error);
+          }
+        } else {
+          // Original message - anyone can mark it (existing behavior)
           const userInfo = await client.users.info({ user });
           const userData = {
             displayName: userInfo.user?.profile?.display_name || userInfo.user?.name,
@@ -56,8 +141,13 @@ export function registerReactionHandler(app: App) {
           const answerUser = await ensureUser(workspace.id, user, userData);
 
           await markQuestionAnswered(question.id, answerUser.id);
-          logger.info(`Question ${question.id} marked as answered by user ${user}`);
-          break;
+          logger.info(`Question ${question.id} marked as answered by user ${user} (original message)`);
+        }
+        return;
+      }
+
+      // Handle other reactions
+      switch (reaction) {
 
         case 'no_entry':
         case 'no_entry_sign':

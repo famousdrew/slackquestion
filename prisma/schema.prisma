@@ -76,6 +76,7 @@ model Question {
   askedAt           DateTime  @map("asked_at")
   answeredAt        DateTime? @map("answered_at")
   answererId        String?   @map("answerer_id")
+  answerSlackMessageId String? @map("answer_slack_message_id")
   status            String    @default("unanswered")
   escalationLevel   Int       @default(0) @map("escalation_level")
   lastEscalatedAt   DateTime? @map("last_escalated_at")

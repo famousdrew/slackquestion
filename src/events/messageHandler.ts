@@ -6,7 +6,9 @@ import { App } from '@slack/bolt';
 import { isQuestion } from '../services/questionDetector.js';
 import { storeQuestion, questionExists } from '../services/questionStorage.js';
 import { ensureWorkspace, ensureChannel, ensureUser } from '../utils/db.js';
-import { isZendeskMessage, extractZendeskTicketId, getZendeskBotUserId } from '../services/zendeskDetector.js';
+import { isZendeskMessage, extractZendeskTicketId, getZendeskBotUserId, extractAskerName } from '../services/zendeskDetector.js';
+import { prisma } from '../utils/db.js';
+import type { User } from '@prisma/client';
 
 export function registerMessageHandler(app: App) {
   // Handle regular channel messages
@@ -129,6 +131,56 @@ export function registerMessageHandler(app: App) {
 }
 
 /**
+ * Find a Slack user by their display name or real name
+ * Uses fuzzy matching to handle variations
+ * @param workspaceId - Workspace ID to search in
+ * @param displayName - Name to search for (from Zendesk)
+ * @returns Matching User or null if not found
+ */
+async function findSlackUserByName(
+  workspaceId: string,
+  displayName: string
+): Promise<User | null> {
+  // 1. Try exact match on display_name (case-insensitive)
+  let user = await prisma.user.findFirst({
+    where: {
+      workspaceId,
+      displayName: { equals: displayName, mode: 'insensitive' }
+    }
+  });
+
+  if (user) return user;
+
+  // 2. Try exact match on real_name (case-insensitive)
+  user = await prisma.user.findFirst({
+    where: {
+      workspaceId,
+      realName: { equals: displayName, mode: 'insensitive' }
+    }
+  });
+
+  if (user) return user;
+
+  // 3. Try partial match (in case Zendesk has "Drew Clark" but Slack has "Drew")
+  // Split name and try first part
+  const nameParts = displayName.split(' ');
+  if (nameParts.length > 1) {
+    const firstName = nameParts[0];
+    user = await prisma.user.findFirst({
+      where: {
+        workspaceId,
+        OR: [
+          { displayName: { contains: firstName, mode: 'insensitive' } },
+          { realName: { contains: firstName, mode: 'insensitive' } }
+        ]
+      }
+    });
+  }
+
+  return user;
+}
+
+/**
  * Handle Zendesk side conversation messages
  * Treats all side conversations as questions to track
  */
@@ -193,6 +245,23 @@ async function handleZendeskSideConversation(message: any, client: any, logger: 
       realName: 'Zendesk Side Conversation',
     });
 
+    // Try to extract the real asker's name from Zendesk message
+    // Pattern: "Drew Clark in ticket #123:"
+    const zendeskAskerName = extractAskerName(messageText);
+    let actualAsker = zendeskBotUser;
+
+    if (zendeskAskerName) {
+      logger.info(`Extracted asker name from Zendesk: "${zendeskAskerName}"`);
+      const matchedUser = await findSlackUserByName(workspace.id, zendeskAskerName);
+
+      if (matchedUser) {
+        actualAsker = matchedUser;
+        logger.info(`Matched Zendesk asker "${zendeskAskerName}" to Slack user ${matchedUser.displayName} (${matchedUser.slackUserId})`);
+      } else {
+        logger.info(`Could not match Zendesk asker "${zendeskAskerName}" to Slack user, using Zendesk bot`);
+      }
+    }
+
     // Check if we've already stored this question
     const exists = await questionExists(workspace.id, messageTs);
     if (exists) {
@@ -207,7 +276,7 @@ async function handleZendeskSideConversation(message: any, client: any, logger: 
     const question = await storeQuestion({
       workspaceId: workspace.id,
       channelId: channel.id,
-      askerId: zendeskBotUser.id,
+      askerId: actualAsker.id,  // Use matched user or fallback to Zendesk bot
       slackMessageId: messageTs,
       slackThreadId: threadTs,
       messageText,
