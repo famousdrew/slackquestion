@@ -142,6 +142,7 @@ export function registerAppHomeHandler(app: App) {
                 type: 'mrkdwn',
                 text:
                   '• `/qr-config` - Configure escalation settings\n' +
+                  '• `/qr-targets` - Manage escalation targets (users, groups, channels)\n' +
                   '• `/qr-stats` - View question statistics\n' +
                   '• `/qr-status` - Check a specific question status',
               },

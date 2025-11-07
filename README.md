@@ -9,10 +9,13 @@ A Slack bot that automatically detects questions in channels, tracks them, and e
 - **Visual Feedback**: Adds ❓ emoji to detected questions for immediate acknowledgment
 - **Smart Tracking**: Stores all questions with metadata (asker, channel, timestamp, thread)
 - **Configurable Answer Detection**: Three modes for marking questions as answered
-- **Two-Tier Escalation System**:
-  - First escalation: Posts in thread and mentions support group
-  - Second escalation: Posts to dedicated escalation channel
+- **Flexible Multi-Tier Escalation System**:
+  - Configure multiple escalation levels with custom timing
+  - Assign different targets at each level: users, user groups, or channels
+  - Mix and match target types (e.g., user group at level 1, specific user at level 2, channel at level 3)
+  - Support for both public and private channels
 - **Modal Configuration UI**: Configure all settings through interactive Slack modal
+- **Escalation Targets Management**: Dedicated `/qr-targets` command for managing escalation targets
 - **App Home Onboarding**: Guided setup for new users with configuration status dashboard
 - **Statistics Dashboard**: View question metrics via `/qr-stats` command
 - **Thread Filtering**: Only tracks top-level questions, ignores replies in threads
@@ -100,6 +103,7 @@ Choose how questions are marked as answered:
    - `/qr-test` - Test that the bot is running
    - `/qr-stats` - View question statistics
    - `/qr-config` - Open configuration modal (escalation settings, answer detection mode)
+   - `/qr-targets` - Manage escalation targets (users, groups, channels)
 
 7. **Install App to Workspace**
    - Go to "Install App" and click "Install to Workspace"
@@ -209,14 +213,21 @@ Shows:
 - Average response time
 - Per-channel breakdown
 
-**Finding Channel IDs**
-```bash
-node get-channels.js    # Lists all channels with IDs
+**Managing Escalation Targets**
 ```
+/qr-targets
+```
+Opens an interactive interface to manage escalation targets. You can:
+- Add users, user groups, or channels as escalation targets
+- Assign targets to different escalation levels (1, 2, 3)
+- Remove targets when they're no longer needed
+- View all configured targets organized by level
 
-**Finding User Group IDs**
+**Finding IDs for Configuration**
 ```bash
+node get-users.js       # Lists all users with IDs
 node get-usergroups.js  # Lists all user groups with IDs
+node get-channels.js    # Lists all channels with IDs
 ```
 
 ## How It Works
@@ -235,15 +246,32 @@ node get-usergroups.js  # Lists all user groups with IDs
 
 The escalation engine runs every 30 seconds checking for unanswered questions:
 
-**First Escalation** (default: 2 minutes)
-- Posts reply in the question's thread
-- Mentions configured user group (e.g., @t2)
+**Flexible Multi-Level Escalation**
+The bot supports up to 3 escalation levels, each with customizable timing and targets:
+
+**Level 1 Escalation** (default: 2 minutes)
+- Activates when question remains unanswered for configured time
+- Notifies all assigned targets (user groups, users, or channels)
+- User groups and users: Mentioned in the question thread
+- Channels: Alert posted with link to original question
 - Updates escalation level to 1
 
-**Second Escalation** (default: 4 minutes)
-- Posts to dedicated escalation channel
-- Includes question text, asker, channel, and thread link
+**Level 2 Escalation** (default: 4 minutes)
+- Activates when question still unanswered after level 1
+- Notifies next set of configured targets
+- Typically used for escalation to dedicated channels or senior staff
 - Updates escalation level to 2
+
+**Level 3 Escalation** (default: 24 hours)
+- Final escalation for critical unanswered questions
+- Notifies final targets (e.g., specific manager or executive)
+- Can include direct messages to assigned users
+- Updates escalation level to 3
+
+**Target Types:**
+- **User Groups**: Mentioned in thread, all members notified
+- **Users**: Mentioned in thread AND receive a DM with question details
+- **Channels**: Alert posted with original question context and link
 
 **Escalation Stops When:**
 - Question marked with ✅ emoji (all modes)
@@ -273,6 +301,74 @@ Someone replies → Escalation stops (but not marked answered for stats)
 ✅ added → Marked answered for statistics
 ```
 
+## Escalation Targets System
+
+### Overview
+The flexible escalation targets system allows you to assign different notification recipients at each escalation level. This enables sophisticated routing strategies tailored to your team's needs.
+
+### Configuration Examples
+
+**Example 1: Standard Support Team Escalation**
+- Level 1: User group `@support-team` (first responders)
+- Level 2: Channel `#escalated-questions` (team visibility)
+- Level 3: User `@support-manager` (final escalation)
+
+**Example 2: Multi-Team Routing**
+- Level 1: User group `@tier1-support`
+- Level 2: User group `@tier2-support` + Channel `#support-escalations`
+- Level 3: User `@head-of-support`
+
+**Example 3: Topic-Specific Routing**
+- Level 1: User group `@engineering`
+- Level 2: Channel `#engineering-help`
+- Level 3: User `@tech-lead`
+
+### Managing Targets
+
+**Adding Targets**
+1. Run `/qr-targets`
+2. Click "➕ Add Target"
+3. Select escalation level (1, 2, or 3)
+4. Choose target type (User, User Group, or Channel)
+5. Select the specific user/group/channel
+6. Click "Add"
+
+**Removing Targets**
+1. Run `/qr-targets`
+2. Click "🗑️ Remove Target"
+3. Select the target to remove
+4. Confirm removal
+
+**Viewing Current Configuration**
+- Run `/qr-targets` to see all configured targets organized by level
+- Each target shows its type and name for easy identification
+
+### Target Behavior
+
+**User Groups**
+- Posted as mention in the original question thread
+- All group members receive notification
+- Best for: Teams, on-call rotations
+
+**Individual Users**
+- Mentioned in the original question thread
+- Receives a direct message with question details and link
+- Best for: Specific experts, managers, escalation points
+
+**Channels**
+- Alert posted to the channel with question context
+- Includes link back to original thread
+- Best for: Visibility, team awareness, public escalation
+
+### Migration from Legacy Config
+
+The system automatically migrates your existing configuration:
+- Existing user group → Level 1 target
+- Existing escalation channel → Level 2 target
+- Any configured final user → Level 3 target
+
+You can then add additional targets or reconfigure as needed using `/qr-targets`.
+
 ## Project Structure
 
 ```
@@ -280,21 +376,24 @@ slackfquestion/
 ├── src/
 │   ├── commands/
 │   │   ├── configCommand.ts       # /qr-config modal UI
-│   │   └── statsCommand.ts        # /qr-stats command
+│   │   ├── statsCommand.ts        # /qr-stats command
+│   │   └── targetsCommand.ts      # /qr-targets escalation management
 │   ├── events/
 │   │   ├── appHome.ts             # App Home tab & onboarding
 │   │   ├── messageHandler.ts      # Question detection
 │   │   └── reactionHandler.ts     # Answer marking
 │   ├── services/
 │   │   ├── configService.ts       # Workspace configuration
-│   │   ├── escalationEngine.ts    # Escalation logic
+│   │   ├── escalationEngine.ts    # Flexible escalation logic
+│   │   ├── escalationTargetService.ts  # Escalation target management
 │   │   ├── questionDetector.ts    # Pattern matching
 │   │   └── questionStorage.ts     # Database operations
 │   ├── utils/
 │   │   └── db.ts                  # Prisma client & helpers
 │   └── index.ts                   # Main entry point
 ├── prisma/
-│   └── schema.prisma              # Database schema
+│   └── schema.prisma              # Database schema (with EscalationTarget model)
+├── get-users.js                   # Helper: list users
 ├── get-channels.js                # Helper: list channels
 ├── get-usergroups.js              # Helper: list user groups
 ├── check-question.js              # Helper: debug questions
@@ -309,7 +408,16 @@ slackfquestion/
 - **users**: Users who have asked questions
 - **questions**: All detected questions with status
 - **escalations**: Log of escalation actions
-- **workspace_config**: Per-workspace settings
+- **workspace_config**: Per-workspace settings (timing, answer detection mode)
+- **escalation_targets**: Flexible escalation targets (users, groups, channels) for each level
+
+### New: EscalationTarget Model
+Stores flexible escalation targets for sophisticated routing:
+- **targetType**: 'user', 'user_group', or 'channel'
+- **targetId**: Slack ID of the user, group, or channel
+- **escalationLevel**: Which level (1, 2, 3) this target is for
+- **priority**: Order of notification within a level
+- **isActive**: Whether this target is currently active
 
 See `prisma/schema.prisma` for full schema.
 
@@ -452,6 +560,9 @@ See `SCALING.md` for comprehensive SaaS strategy.
 - [x] App Home onboarding experience
 - [x] Private channel support
 - [x] Visual question detection feedback
+- [x] Flexible multi-tier escalation system
+- [x] Support for user, user group, and channel targets
+- [x] Per-level target assignment with `/qr-targets` command
 
 **Phase 2: Enhanced Analytics** (Next)
 - [ ] Web dashboard
