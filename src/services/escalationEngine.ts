@@ -13,6 +13,7 @@ import {
 } from './escalationTargetService.js';
 import { ESCALATION_ENGINE, ESCALATION_LEVEL, QUESTION_STATUS } from '../utils/constants.js';
 import { buildThreadLink, getTeamDomain } from '../utils/slackHelpers.js';
+import { getEffectiveChannelConfig, type ChannelSettings } from './channelConfigService.js';
 
 // Type for escalation execution results
 interface EscalationResult {
@@ -68,18 +69,8 @@ async function checkForEscalations(app: App) {
       // Migrate legacy config to new system if needed
       await migrateFromLegacyConfig(workspace.id);
 
-      const firstEscalationMs = config.firstEscalationMinutes * 60000;
-      const secondEscalationMs = config.secondEscalationMinutes * 60000;
-      const finalEscalationMs = config.finalEscalationMinutes * 60000;
-
-      // Build escalation time thresholds for each level
-      const escalationThresholds = [
-        { level: 0, time: now.getTime() - firstEscalationMs }, // Level 0 → Level 1
-        { level: 1, time: now.getTime() - secondEscalationMs }, // Level 1 → Level 2
-        { level: 2, time: now.getTime() - finalEscalationMs }, // Level 2 → Level 3
-      ];
-
-      // Find questions for this workspace that need escalation
+      // Find all unanswered questions for this workspace
+      // We'll check each one individually with its channel-specific config
       const questions = await prisma.question.findMany({
         where: {
           workspaceId: workspace.id,
@@ -87,12 +78,6 @@ async function checkForEscalations(app: App) {
           escalationLevel: {
             lt: ESCALATION_LEVEL.PAUSED, // Don't escalate questions that have been paused
           },
-          OR: escalationThresholds.map((threshold) => ({
-            escalationLevel: threshold.level,
-            askedAt: {
-              lte: new Date(threshold.time),
-            },
-          })),
         },
         include: {
           channel: true,
@@ -101,6 +86,31 @@ async function checkForEscalations(app: App) {
       });
 
       for (const question of questions) {
+        // Get effective config for this channel (workspace defaults + channel overrides)
+        const effectiveConfig = await getEffectiveChannelConfig(question.channelId, config);
+
+        // Skip if escalation is disabled for this channel
+        if (!effectiveConfig.escalationEnabled) {
+          continue;
+        }
+
+        // Check if question is old enough to escalate
+        const questionAge = now.getTime() - new Date(question.askedAt).getTime();
+        const currentLevel = question.escalationLevel;
+
+        let shouldEscalate = false;
+        if (currentLevel === 0 && questionAge >= effectiveConfig.firstEscalationMinutes * 60000) {
+          shouldEscalate = true;
+        } else if (currentLevel === 1 && questionAge >= effectiveConfig.secondEscalationMinutes * 60000) {
+          shouldEscalate = true;
+        } else if (currentLevel === 2 && questionAge >= effectiveConfig.finalEscalationMinutes * 60000) {
+          shouldEscalate = true;
+        }
+
+        if (!shouldEscalate) {
+          continue;
+        }
+
         // Check if there are any replies in the thread
         const hasReplies = await checkForThreadReplies(
           app,
@@ -109,8 +119,8 @@ async function checkForEscalations(app: App) {
         );
 
         if (hasReplies) {
-          // Handle based on answer detection mode
-          if (config.answerDetectionMode === 'thread_auto') {
+          // Handle based on channel-specific answer detection mode
+          if (effectiveConfig.answerDetectionMode === 'thread_auto') {
             // Auto-mark as answered
             await prisma.question.update({
               where: { id: question.id },
@@ -122,7 +132,7 @@ async function checkForEscalations(app: App) {
             });
             console.log(`✅ Question ${question.id} auto-marked as answered (thread_auto mode)`);
             continue;
-          } else if (config.answerDetectionMode === 'hybrid') {
+          } else if (effectiveConfig.answerDetectionMode === 'hybrid') {
             // Stop escalation but don't mark as answered
             await prisma.question.update({
               where: { id: question.id },
