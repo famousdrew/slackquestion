@@ -12,6 +12,111 @@ import {
   validateTarget,
   type EscalationTargetType,
 } from '../services/escalationTargetService.js';
+import { isWorkspaceAdmin, sendPermissionDenied } from '../utils/permissions.js';
+
+/**
+ * Helper function to generate targets list blocks
+ */
+async function buildTargetsListBlocks(workspaceId: string): Promise<any[]> {
+  const targets = await getEscalationTargets(workspaceId);
+
+  // Group targets by level
+  const targetsByLevel = new Map<number, typeof targets>();
+  for (const target of targets) {
+    if (!targetsByLevel.has(target.escalationLevel)) {
+      targetsByLevel.set(target.escalationLevel, []);
+    }
+    targetsByLevel.get(target.escalationLevel)!.push(target);
+  }
+
+  // Build message blocks
+  const blocks: any[] = [
+    {
+      type: 'header',
+      text: {
+        type: 'plain_text',
+        text: '🎯 Escalation Targets',
+      },
+    },
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: 'Manage who gets notified at each escalation level.',
+      },
+    },
+    {
+      type: 'divider',
+    },
+  ];
+
+  // Show targets for each level
+  const levels = [1, 2, 3];
+  for (const level of levels) {
+    const levelTargets = targetsByLevel.get(level) || [];
+
+    blocks.push({
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `*Level ${level} Escalation:*`,
+      },
+    });
+
+    if (levelTargets.length === 0) {
+      blocks.push({
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: '_No targets configured_',
+        },
+      });
+    } else {
+      const targetList = levelTargets
+        .map((t, idx) => `${idx + 1}. ${getTargetDescription(t)}`)
+        .join('\n');
+
+      blocks.push({
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: targetList,
+        },
+      });
+    }
+  }
+
+  blocks.push(
+    {
+      type: 'divider',
+    },
+    {
+      type: 'actions',
+      elements: [
+        {
+          type: 'button',
+          text: {
+            type: 'plain_text',
+            text: '➕ Add Target',
+          },
+          action_id: 'add_escalation_target',
+          style: 'primary',
+        },
+        {
+          type: 'button',
+          text: {
+            type: 'plain_text',
+            text: '🗑️ Remove Target',
+          },
+          action_id: 'remove_escalation_target',
+          style: 'danger',
+        },
+      ],
+    }
+  );
+
+  return blocks;
+}
 
 export function registerTargetsCommand(app: App) {
   // Main command - shows current targets and options
@@ -19,6 +124,13 @@ export function registerTargetsCommand(app: App) {
     await ack();
 
     try {
+      // Check if user is workspace admin
+      const isAdmin = await isWorkspaceAdmin(client, command.user_id);
+      if (!isAdmin) {
+        await sendPermissionDenied(client, command.channel_id, command.user_id);
+        return;
+      }
+
       const teamInfo = await client.team.info();
       const teamId = teamInfo.team?.id;
 
@@ -27,102 +139,7 @@ export function registerTargetsCommand(app: App) {
       }
 
       const workspace = await ensureWorkspace(teamId);
-      const targets = await getEscalationTargets(workspace.id);
-
-      // Group targets by level
-      const targetsByLevel = new Map<number, typeof targets>();
-      for (const target of targets) {
-        if (!targetsByLevel.has(target.escalationLevel)) {
-          targetsByLevel.set(target.escalationLevel, []);
-        }
-        targetsByLevel.get(target.escalationLevel)!.push(target);
-      }
-
-      // Build message blocks
-      const blocks: any[] = [
-        {
-          type: 'header',
-          text: {
-            type: 'plain_text',
-            text: '🎯 Escalation Targets',
-          },
-        },
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text: 'Manage who gets notified at each escalation level.',
-          },
-        },
-        {
-          type: 'divider',
-        },
-      ];
-
-      // Show targets for each level
-      const levels = [1, 2, 3];
-      for (const level of levels) {
-        const levelTargets = targetsByLevel.get(level) || [];
-
-        blocks.push({
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text: `*Level ${level} Escalation:*`,
-          },
-        });
-
-        if (levelTargets.length === 0) {
-          blocks.push({
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: '_No targets configured_',
-            },
-          });
-        } else {
-          const targetList = levelTargets
-            .map((t, idx) => `${idx + 1}. ${getTargetDescription(t)}`)
-            .join('\n');
-
-          blocks.push({
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: targetList,
-            },
-          });
-        }
-      }
-
-      blocks.push(
-        {
-          type: 'divider',
-        },
-        {
-          type: 'actions',
-          elements: [
-            {
-              type: 'button',
-              text: {
-                type: 'plain_text',
-                text: '➕ Add Target',
-              },
-              action_id: 'add_escalation_target',
-              style: 'primary',
-            },
-            {
-              type: 'button',
-              text: {
-                type: 'plain_text',
-                text: '🗑️ Remove Target',
-              },
-              action_id: 'remove_escalation_target',
-              style: 'danger',
-            },
-          ],
-        }
-      );
+      const blocks = await buildTargetsListBlocks(workspace.id);
 
       // Send ephemeral message
       await client.chat.postEphemeral({
@@ -366,16 +383,19 @@ export function registerTargetsCommand(app: App) {
         escalationLevel: level,
       });
 
-      // Send confirmation
-      await client.chat.postEphemeral({
-        channel: body.user.id,
-        user: body.user.id,
-        text: `✅ Added ${targetType} target "${validation.name}" to level ${level} escalation`,
-      });
-
       console.log(
         `✅ Added escalation target: ${targetType} ${targetId} at level ${level} for workspace ${workspace.slackTeamId}`
       );
+
+      // Show updated targets list
+      const blocks = await buildTargetsListBlocks(workspace.id);
+
+      await client.chat.postEphemeral({
+        channel: body.user.id,
+        user: body.user.id,
+        text: `✅ Added ${targetType} target "${validation.name}" to level ${level} escalation\n\nHere's your updated configuration:`,
+        blocks,
+      });
     } catch (error) {
       logger.error('Error adding escalation target:', error);
       await client.chat.postEphemeral({
@@ -465,17 +485,29 @@ export function registerTargetsCommand(app: App) {
     await ack();
 
     try {
+      const teamInfo = await client.team.info();
+      const teamId = teamInfo.team?.id;
+
+      if (!teamId) {
+        throw new Error('Could not get team information');
+      }
+
+      const workspace = await ensureWorkspace(teamId);
       const targetId = view.state.values.target_select.target.selected_option!.value;
 
       await removeEscalationTarget(targetId);
 
+      console.log(`✅ Removed escalation target: ${targetId}`);
+
+      // Show updated targets list
+      const blocks = await buildTargetsListBlocks(workspace.id);
+
       await client.chat.postEphemeral({
         channel: body.user.id,
         user: body.user.id,
-        text: '✅ Escalation target removed',
+        text: '✅ Escalation target removed\n\nHere\'s your updated configuration:',
+        blocks,
       });
-
-      console.log(`✅ Removed escalation target: ${targetId}`);
     } catch (error) {
       logger.error('Error removing escalation target:', error);
       await client.chat.postEphemeral({
