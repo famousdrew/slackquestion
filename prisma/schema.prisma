@@ -61,6 +61,7 @@ model User {
   finalEscalationFor  WorkspaceConfig[]
 
   @@unique([workspaceId, slackUserId])
+  @@index([isActive, lastSeenAt])
   @@map("users")
 }
 
@@ -89,6 +90,9 @@ model Question {
   escalations       Escalation[]
   escalationEvents  EscalationEvent[]
 
+  @@index([status, askedAt])
+  @@index([status, escalationLevel])
+  @@index([channelId, askedAt])
   @@map("questions")
 }
 
@@ -106,6 +110,7 @@ model UserExpertise {
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, topic])
+  @@index([topic, confidenceScore])
   @@map("user_expertise")
 }
 
