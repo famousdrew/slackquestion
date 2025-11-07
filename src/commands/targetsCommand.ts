@@ -2,7 +2,7 @@
  * Escalation Targets Command Handler
  * Allows admins to manage escalation targets (users, groups, channels)
  */
-import { App, type Block, type KnownBlock } from '@slack/bolt';
+import { App } from '@slack/bolt';
 import { ensureWorkspace } from '../utils/db.js';
 import {
   getEscalationTargets,
@@ -14,10 +14,13 @@ import {
 } from '../services/escalationTargetService.js';
 import { isWorkspaceAdmin, sendPermissionDenied } from '../utils/permissions.js';
 
+// Slack Block type
+type SlackBlock = Record<string, unknown>;
+
 /**
  * Helper function to generate targets list blocks
  */
-async function buildTargetsListBlocks(workspaceId: string): Promise<(KnownBlock | Block)[]> {
+async function buildTargetsListBlocks(workspaceId: string): Promise<SlackBlock[]> {
   const targets = await getEscalationTargets(workspaceId);
 
   // Group targets by level
@@ -30,7 +33,7 @@ async function buildTargetsListBlocks(workspaceId: string): Promise<(KnownBlock 
   }
 
   // Build message blocks
-  const blocks: (KnownBlock | Block)[] = [
+  const blocks: SlackBlock[] = [
     {
       type: 'header',
       text: {

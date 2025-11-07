@@ -15,6 +15,7 @@ import { ESCALATION_ENGINE, ESCALATION_LEVEL, QUESTION_STATUS } from '../utils/c
 import { buildThreadLink, getTeamDomain } from '../utils/slackHelpers.js';
 import { getEffectiveChannelConfig, type ChannelSettings } from './channelConfigService.js';
 import type { Question, Channel, User, WorkspaceConfig } from '@prisma/client';
+import type { WorkspaceConfigData } from './configService.js';
 
 // Type for Question with required relations
 type QuestionWithRelations = Question & {
@@ -203,7 +204,7 @@ async function performEscalation(
   app: App,
   question: QuestionWithRelations,
   workspaceId: string,
-  config: WorkspaceConfig
+  config: WorkspaceConfig | WorkspaceConfigData
 ) {
   try {
     const currentLevel = question.escalationLevel;
@@ -435,7 +436,7 @@ async function executeEscalationTarget(
  * Get legacy targets from config for backward compatibility
  */
 async function getLegacyTargets(
-  config: WorkspaceConfig,
+  config: WorkspaceConfig | WorkspaceConfigData,
   level: number
 ): Promise<EscalationTargetData[]> {
   const targets: EscalationTargetData[] = [];

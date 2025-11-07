@@ -2,10 +2,13 @@
  * Test Escalation Command
  * Allows admins to test escalation configuration without waiting
  */
-import { App, type Block, type KnownBlock } from '@slack/bolt';
+import { App } from '@slack/bolt';
 import { ensureWorkspace } from '../utils/db.js';
 import { getTargetsForLevel } from '../services/escalationTargetService.js';
 import { isWorkspaceAdmin, sendPermissionDenied } from '../utils/permissions.js';
+
+// Slack Block type
+type SlackBlock = Record<string, unknown>;
 
 export function registerTestEscalationCommand(app: App) {
   app.command('/qr-test-escalation', async ({ command, ack, client, logger }) => {
@@ -89,7 +92,7 @@ export function registerTestEscalationCommand(app: App) {
       }
 
       // Build blocks array
-      const blocks: (Block | KnownBlock)[] = [
+      const blocks: SlackBlock[] = [
         {
           type: 'section',
           text: {
