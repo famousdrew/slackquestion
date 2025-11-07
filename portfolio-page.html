@@ -340,6 +340,7 @@
             <div class="hero-emoji">❓⚡</div>
             <h1>Slack Question Router</h1>
             <p>Never let another question go unanswered. Intelligent escalation system that ensures every question in your Slack workspace gets the attention it deserves.</p>
+            <p style="margin-top: 20px; font-size: 1rem; opacity: 0.9;">🔒 Privacy-focused • No email collection • No PII storage • Self-hostable</p>
         </div>
     </header>
 
@@ -378,6 +379,12 @@
                     <div class="feature-icon">🔧</div>
                     <h3>Easy Configuration</h3>
                     <p>Beautiful modal interface for all settings. Choose any user group, any channel, and custom timing. Per-workspace configuration means every team gets exactly what they need.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Privacy First</h3>
+                    <p>No email collection, no PII storage. Only stores public Slack profile data and message text needed for routing. Row-Level Security enabled, zero third-party data sharing.</p>
                 </div>
 
                 <div class="feature-card">
@@ -456,8 +463,8 @@
     <!-- Stats/Capabilities -->
     <section class="stats">
         <div class="container">
-            <h2>Built for Performance</h2>
-            <p class="subtitle">Reliable, scalable, and efficient</p>
+            <h2>Built for Performance & Privacy</h2>
+            <p class="subtitle">Reliable, secure, and efficient</p>
 
             <div class="stats-grid">
                 <div class="stat-card">
@@ -471,13 +478,13 @@
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-number">∞</div>
-                    <div class="stat-label">Concurrent Questions</div>
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Emails Collected</div>
                 </div>
 
                 <div class="stat-card">
-                    <div class="stat-number">3</div>
-                    <div class="stat-label">Answer Detection Modes</div>
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Your Data Ownership</div>
                 </div>
             </div>
         </div>
@@ -551,9 +558,24 @@
                     </ul>
                 </div>
 
-                <div class="info-box">
-                    <h4>🔐 Data & Privacy</h4>
-                    <p>All question data is stored securely in a PostgreSQL database. The bot only tracks message text, timestamps, and metadata necessary for escalation logic. No message content is shared with third parties.</p>
+                <div class="usage-section">
+                    <h3><span>🔐</span> Security & Privacy</h3>
+                    <p>We take data privacy seriously. The Question Router is designed with security and minimal data collection in mind:</p>
+                    <ul>
+                        <li><strong>No Email Collection</strong> - Email addresses are NOT stored (removed in January 2025 privacy update)</li>
+                        <li><strong>No PII Storage</strong> - No phone numbers, addresses, or personal identification information collected</li>
+                        <li><strong>Minimal Data Collection</strong> - Only stores Slack user IDs, display names, and question message text necessary for routing</li>
+                        <li><strong>Public Profile Data Only</strong> - Uses publicly available Slack workspace profile information (names visible to all workspace members)</li>
+                        <li><strong>Secure Database</strong> - All data stored in PostgreSQL with Row-Level Security (RLS) policies enabled</li>
+                        <li><strong>No Third-Party Sharing</strong> - Your question data never leaves your infrastructure or gets shared with external services</li>
+                        <li><strong>Self-Hosted Option</strong> - Deploy on your own infrastructure for complete data control</li>
+                        <li><strong>Automatic Data Retention</strong> - Optional: Configure automatic deletion of old question data</li>
+                    </ul>
+                    <div class="info-box">
+                        <h4>📋 What We Store</h4>
+                        <p><strong>Required for functionality:</strong> Question message text, Slack user IDs, display names, channel IDs, timestamps, and escalation status.</p>
+                        <p><strong>What we DON'T store:</strong> Email addresses, phone numbers, payment info, physical addresses, or any personally identifiable information beyond public Slack profiles.</p>
+                    </div>
                 </div>
             </div>
         </div>
