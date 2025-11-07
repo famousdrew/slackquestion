@@ -59,8 +59,8 @@ slack-question-router/
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd slack-question-router
+git clone https://github.com/famousdrew/slackquestion
+cd slackquestion
 ```
 
 2. Install dependencies:
@@ -105,25 +105,84 @@ npm run dev
 
 ## Development Phases
 
-- **Phase 0**: Infrastructure setup ✓
-- **Phase 1**: Core question detection
-- **Phase 2**: Answer detection
-- **Phase 3**: Expertise system
-- **Phase 4**: Escalation engine
-- **Phase 5**: Configuration & commands
-- **Phase 6**: Polish & deployment
+- **Phase 0**: Infrastructure setup ✅
+- **Phase 1**: Core question detection 🚧 (In Progress - 80% complete)
+- **Phase 2**: Answer detection ⏳
+- **Phase 3**: Expertise system ⏳
+- **Phase 4**: Escalation engine ⏳
+- **Phase 5**: Configuration & commands ⏳
+- **Phase 6**: Polish & deployment ⏳
+
+### Current Implementation Status
+
+**Completed:**
+- ✅ Slack bot with Socket Mode
+- ✅ Database schema (Prisma)
+- ✅ Question detection algorithm
+- ✅ Message event listener
+- ✅ Question storage in database
+- ✅ Workspace/Channel/User management
+- ✅ Logging utility
+- ✅ Error handling and graceful shutdown
+
+**In Progress:**
+- 🚧 Database migrations
+- 🚧 Testing with real Slack workspace
+
+**Not Started:**
+- ⏳ Answer detection
+- ⏳ Expertise matching system
+- ⏳ Escalation engine (BullMQ)
+- ⏳ Slash commands (except /qr-test)
 
 See [slack-question-router-prd.md](./slack-question-router-prd.md) for detailed requirements.
 
 ## Available Commands
 
-- `/qr-test` - Test that the bot is running (development)
-- `/qr-config` - Configure bot settings
-- `/qr-stats` - View question/answer statistics
-- `/qr-expertise` - Manage your expertise areas
-- `/qr-resolve` - Mark a question as resolved
-- `/qr-dismiss` - Dismiss a false positive question
-- `/qr-snooze` - Snooze escalation for a question
+**Implemented:**
+- `/qr-test` ✅ - Test that the bot is running
+
+**Planned:**
+- `/qr-config` ⏳ - Configure bot settings
+- `/qr-stats` ⏳ - View question/answer statistics
+- `/qr-expertise` ⏳ - Manage your expertise areas
+- `/qr-resolve` ⏳ - Mark a question as resolved
+- `/qr-dismiss` ⏳ - Dismiss a false positive question
+- `/qr-snooze` ⏳ - Snooze escalation for a question
+
+## Project Structure
+
+```
+src/
+├── index.ts                    # App entry point
+├── events/
+│   └── message.ts             # Message event handler
+├── services/
+│   ├── questionDetector.ts    # Pattern-based question detection
+│   ├── questionManager.ts     # Question database operations
+│   ├── workspaceManager.ts    # Workspace/channel/user management
+│   └── expertiseMatcher.ts    # Expertise matching (stub)
+└── utils/
+    ├── prisma.ts              # Prisma client singleton
+    └── logger.ts              # Logging utility
+```
+
+## Troubleshooting
+
+### Database Connection Issues
+- Ensure PostgreSQL is running
+- Check `DATABASE_URL` in your `.env` file
+- Run `npm run prisma:generate` after schema changes
+
+### Bot Not Responding
+- Verify Socket Mode is enabled in Slack app settings
+- Check `SLACK_APP_TOKEN` is set correctly
+- Ensure bot has proper permissions (see Slack App Setup)
+
+### Questions Not Being Detected
+- Check bot is invited to the channel
+- Verify channel is being monitored (default: all channels are monitored)
+- Check logs with `npm run dev` for detection details
 
 ## License
 

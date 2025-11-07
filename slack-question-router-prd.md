@@ -1,9 +1,9 @@
 # Slack Question Router - Product Requirements Document
 
-**Version:** 1.0  
-**Last Updated:** November 4, 2025  
-**Document Owner:** Drew  
-**Status:** Ready for Development
+**Version:** 1.0
+**Last Updated:** November 4, 2024
+**Document Owner:** Drew
+**Status:** In Development (Phase 1)
 
 ---
 
