@@ -11,8 +11,10 @@ import {
   migrateFromLegacyConfig,
   type EscalationTargetData,
 } from './escalationTargetService.js';
+import { ESCALATION_ENGINE, ESCALATION_LEVEL, QUESTION_STATUS } from '../utils/constants.js';
+import { buildThreadLink, getTeamDomain } from '../utils/slackHelpers.js';
 
-const CHECK_INTERVAL_MS = 30000; // Check every 30 seconds
+const CHECK_INTERVAL_MS = ESCALATION_ENGINE.CHECK_INTERVAL_MS;
 
 // Fallback environment variables for backwards compatibility
 const FALLBACK_USER_GROUP = process.env.ESCALATION_USER_GROUP || null;
@@ -71,9 +73,9 @@ async function checkForEscalations(app: App) {
       const questions = await prisma.question.findMany({
         where: {
           workspaceId: workspace.id,
-          status: 'unanswered',
+          status: QUESTION_STATUS.UNANSWERED,
           escalationLevel: {
-            lt: 99, // Don't escalate questions that have been paused
+            lt: ESCALATION_LEVEL.PAUSED, // Don't escalate questions that have been paused
           },
           OR: escalationThresholds.map((threshold) => ({
             escalationLevel: threshold.level,
@@ -103,9 +105,9 @@ async function checkForEscalations(app: App) {
             await prisma.question.update({
               where: { id: question.id },
               data: {
-                status: 'answered',
+                status: QUESTION_STATUS.ANSWERED,
                 answeredAt: new Date(),
-                escalationLevel: 99,
+                escalationLevel: ESCALATION_LEVEL.PAUSED,
               },
             });
             console.log(`✅ Question ${question.id} auto-marked as answered (thread_auto mode)`);
@@ -115,7 +117,7 @@ async function checkForEscalations(app: App) {
             await prisma.question.update({
               where: { id: question.id },
               data: {
-                escalationLevel: 99,
+                escalationLevel: ESCALATION_LEVEL.PAUSED,
               },
             });
             console.log(`✅ Question ${question.id} has replies, stopping escalation (hybrid mode)`);
@@ -194,14 +196,11 @@ async function performEscalation(app: App, question: any, workspaceId: string, c
       return;
     }
 
-    // Execute escalation for each target
-    const actionsTaken: string[] = [];
-    for (const target of targets) {
-      const action = await executeEscalationTarget(app, question, target, questionAge);
-      if (action) {
-        actionsTaken.push(action);
-      }
-    }
+    // Execute escalation for all targets in parallel
+    const actions = await Promise.all(
+      targets.map((target) => executeEscalationTarget(app, question, target, questionAge))
+    );
+    const actionsTaken = actions.filter((action): action is string => action !== null);
 
     // Update escalation level
     await prisma.question.update({
@@ -267,8 +266,8 @@ async function executeEscalationTarget(
         // Optionally send DM
         try {
           const workspaceInfo = await app.client.team.info();
-          const teamDomain = workspaceInfo.team?.domain || 'your-workspace';
-          const threadLink = `https://${teamDomain}.slack.com/archives/${channelId}/p${messageTs.replace('.', '')}`;
+          const teamDomain = getTeamDomain(workspaceInfo);
+          const threadLink = buildThreadLink(teamDomain, channelId, messageTs);
 
           await app.client.chat.postMessage({
             channel: target.targetId,
@@ -282,8 +281,8 @@ async function executeEscalationTarget(
       case 'channel':
         // Post to escalation channel
         const workspaceInfo = await app.client.team.info();
-        const teamDomain = workspaceInfo.team?.domain || 'your-workspace';
-        const threadLink = `https://${teamDomain}.slack.com/archives/${channelId}/p${messageTs.replace('.', '')}`;
+        const teamDomain = getTeamDomain(workspaceInfo);
+        const threadLink = buildThreadLink(teamDomain, channelId, messageTs);
 
         await app.client.chat.postMessage({
           channel: target.targetId,

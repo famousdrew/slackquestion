@@ -165,12 +165,22 @@ export async function migrateFromLegacyConfig(workspaceId: string): Promise<void
 
   if (!config) return;
 
+  // Check if already migrated
+  if (config.migratedToTargets) return;
+
   const existingTargets = await prisma.escalationTarget.findMany({
     where: { workspaceId },
   });
 
   // Only migrate if no targets exist yet
-  if (existingTargets.length > 0) return;
+  if (existingTargets.length > 0) {
+    // Mark as migrated even if targets exist (user added them manually)
+    await prisma.workspaceConfig.update({
+      where: { workspaceId },
+      data: { migratedToTargets: true },
+    });
+    return;
+  }
 
   const targetsToCreate: CreateEscalationTargetInput[] = [];
 
@@ -208,6 +218,12 @@ export async function migrateFromLegacyConfig(workspaceId: string): Promise<void
   for (const target of targetsToCreate) {
     await addEscalationTarget(workspaceId, target);
   }
+
+  // Mark migration as complete
+  await prisma.workspaceConfig.update({
+    where: { workspaceId },
+    data: { migratedToTargets: true },
+  });
 
   console.log(
     `✅ Migrated ${targetsToCreate.length} escalation targets for workspace ${workspaceId}`
