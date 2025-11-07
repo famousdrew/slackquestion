@@ -87,7 +87,12 @@ async function checkForEscalations(app: App) {
 
       for (const question of questions) {
         // Get effective config for this channel (workspace defaults + channel overrides)
-        const effectiveConfig = await getEffectiveChannelConfig(question.channelId, config);
+        const effectiveConfig = await getEffectiveChannelConfig(question.channelId, {
+          firstEscalationMinutes: config.firstEscalationMinutes,
+          secondEscalationMinutes: config.secondEscalationMinutes,
+          finalEscalationMinutes: config.finalEscalationMinutes,
+          answerDetectionMode: config.answerDetectionMode as 'emoji_only' | 'thread_auto' | 'hybrid',
+        });
 
         // Skip if escalation is disabled for this channel
         if (!effectiveConfig.escalationEnabled) {
