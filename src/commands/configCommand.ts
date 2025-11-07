@@ -16,10 +16,13 @@ export function registerConfigCommand(app: App) {
     await ack();
 
     try {
-      // Get team info
-      const teamInfo = await client.team.info();
-      const teamId = teamInfo.team?.id;
+      // Parallelize all API calls to be faster than 3 second trigger_id expiry
+      const [teamInfo, userGroupsResponse] = await Promise.all([
+        client.team.info(),
+        client.usergroups.list(),
+      ]);
 
+      const teamId = teamInfo.team?.id;
       if (!teamId) {
         throw new Error('Could not get team information');
       }
@@ -27,17 +30,7 @@ export function registerConfigCommand(app: App) {
       const workspace = await ensureWorkspace(teamId);
       const config = await getWorkspaceConfig(workspace.id);
 
-      // Fetch user groups for the dropdown
-      const userGroupsResponse = await client.usergroups.list();
       const userGroups = userGroupsResponse.usergroups || [];
-
-      // Fetch public and private channels for the dropdown
-      const channelsResponse = await client.conversations.list({
-        types: 'public_channel,private_channel',
-        exclude_archived: true,
-        limit: 1000,
-      });
-      const channels = channelsResponse.channels || [];
 
       // Open modal
       await client.views.open({
@@ -180,7 +173,7 @@ export function registerConfigCommand(app: App) {
                 type: 'conversations_select',
                 action_id: 'channel_select',
                 default_to_current_conversation: false,
-                initial_conversation: config.escalationChannelId || undefined,
+                ...(config.escalationChannelId && { initial_conversation: config.escalationChannelId }),
                 filter: {
                   include: ['public', 'private'],
                   exclude_bot_users: true,
