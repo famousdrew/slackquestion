@@ -9,6 +9,7 @@ import {
   getAnswerDetectionModeDescription,
   type AnswerDetectionMode,
 } from '../services/configService.js';
+import { isWorkspaceAdmin, sendPermissionDenied } from '../utils/permissions.js';
 
 export function registerConfigCommand(app: App) {
   // Command handler - opens modal
@@ -16,6 +17,13 @@ export function registerConfigCommand(app: App) {
     await ack();
 
     try {
+      // Check if user is workspace admin
+      const isAdmin = await isWorkspaceAdmin(client, command.user_id);
+      if (!isAdmin) {
+        await sendPermissionDenied(client, command.channel_id, command.user_id);
+        return;
+      }
+
       // Parallelize all API calls to be faster than 3 second trigger_id expiry
       const [teamInfo, userGroupsResponse] = await Promise.all([
         client.team.info(),
