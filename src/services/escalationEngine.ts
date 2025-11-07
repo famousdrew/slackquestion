@@ -176,9 +176,13 @@ async function checkForThreadReplies(
       limit: 10,
     });
 
-    // Filter out the original message and any messages from the bot itself
+    // Filter out the original message, any messages from the bot itself, and all bot messages
     const humanReplies =
-      result.messages?.filter((msg) => msg.ts !== messageTs && msg.user !== botUserId) || [];
+      result.messages?.filter((msg) =>
+        msg.ts !== messageTs && // Not the original message
+        msg.user !== botUserId && // Not our bot
+        !msg.bot_id // Not any bot message (includes Zendesk auto-replies)
+      ) || [];
 
     // If there are any human replies, return true
     return humanReplies.length > 0;
