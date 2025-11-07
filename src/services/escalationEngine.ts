@@ -14,6 +14,13 @@ import {
 import { ESCALATION_ENGINE, ESCALATION_LEVEL, QUESTION_STATUS } from '../utils/constants.js';
 import { buildThreadLink, getTeamDomain } from '../utils/slackHelpers.js';
 import { getEffectiveChannelConfig, type ChannelSettings } from './channelConfigService.js';
+import type { Question, Channel, User, WorkspaceConfig } from '@prisma/client';
+
+// Type for Question with required relations
+type QuestionWithRelations = Question & {
+  channel: Channel;
+  asker: User;
+};
 
 // Type for escalation execution results
 interface EscalationResult {
@@ -192,7 +199,12 @@ async function checkForThreadReplies(
  * Unified escalation function that handles all escalation levels
  * Uses flexible escalation targets from database
  */
-async function performEscalation(app: App, question: any, workspaceId: string, config: any) {
+async function performEscalation(
+  app: App,
+  question: QuestionWithRelations,
+  workspaceId: string,
+  config: WorkspaceConfig
+) {
   try {
     const currentLevel = question.escalationLevel;
     const nextLevel = currentLevel + 1;
@@ -283,7 +295,7 @@ async function performEscalation(app: App, question: any, workspaceId: string, c
  */
 async function executeEscalationTarget(
   app: App,
-  question: any,
+  question: QuestionWithRelations,
   target: EscalationTargetData,
   questionAge: number
 ): Promise<EscalationResult> {
@@ -422,7 +434,10 @@ async function executeEscalationTarget(
 /**
  * Get legacy targets from config for backward compatibility
  */
-async function getLegacyTargets(config: any, level: number): Promise<EscalationTargetData[]> {
+async function getLegacyTargets(
+  config: WorkspaceConfig,
+  level: number
+): Promise<EscalationTargetData[]> {
   const targets: EscalationTargetData[] = [];
 
   if (level === 1 && config.escalationUserGroup) {

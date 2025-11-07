@@ -2,7 +2,7 @@
  * Test Escalation Command
  * Allows admins to test escalation configuration without waiting
  */
-import { App } from '@slack/bolt';
+import { App, type Block, type KnownBlock } from '@slack/bolt';
 import { ensureWorkspace } from '../utils/db.js';
 import { getTargetsForLevel } from '../services/escalationTargetService.js';
 import { isWorkspaceAdmin, sendPermissionDenied } from '../utils/permissions.js';
@@ -89,7 +89,7 @@ export function registerTestEscalationCommand(app: App) {
       }
 
       // Build blocks array
-      const blocks: any[] = [
+      const blocks: (Block | KnownBlock)[] = [
         {
           type: 'section',
           text: {

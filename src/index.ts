@@ -11,14 +11,18 @@ import { registerSetupCommand } from './commands/setupCommand.js';
 import { registerChannelConfigCommand } from './commands/channelConfigCommand.js';
 import { disconnectDb } from './utils/db.js';
 import { startEscalationEngine, stopEscalationEngine } from './services/escalationEngine.js';
+import { validateEnv } from './utils/env.js';
 
 dotenv.config();
 
+// Validate environment variables before starting
+const env = validateEnv();
+
 const app = new App({
-  token: process.env.SLACK_BOT_TOKEN,
-  signingSecret: process.env.SLACK_SIGNING_SECRET,
+  token: env.SLACK_BOT_TOKEN,
+  signingSecret: env.SLACK_SIGNING_SECRET,
   socketMode: true,
-  appToken: process.env.SLACK_APP_TOKEN,
+  appToken: env.SLACK_APP_TOKEN,
 });
 
 // Register event handlers

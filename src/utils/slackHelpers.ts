@@ -1,6 +1,7 @@
 /**
  * Slack utility helper functions
  */
+import type { TeamInfoResponse } from '@slack/web-api';
 
 /**
  * Generate a Slack thread link
@@ -19,6 +20,6 @@ export function buildThreadLink(teamDomain: string, channelId: string, messageTs
  * @param teamInfo - Slack team info response
  * @returns Team domain or fallback
  */
-export function getTeamDomain(teamInfo: any): string {
+export function getTeamDomain(teamInfo: TeamInfoResponse): string {
   return teamInfo.team?.domain || 'your-workspace';
 }

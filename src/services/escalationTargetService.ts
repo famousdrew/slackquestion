@@ -3,6 +3,7 @@
  * Manages flexible escalation targets (users, groups, channels) for workspaces
  */
 import { prisma } from '../utils/db.js';
+import type { WebClient } from '@slack/web-api';
 
 export type EscalationTargetType = 'user' | 'user_group' | 'channel';
 
@@ -250,7 +251,7 @@ export function getTargetDescription(target: EscalationTargetData): string {
  * Validate target exists in Slack
  */
 export async function validateTarget(
-  client: any,
+  client: WebClient,
   targetType: EscalationTargetType,
   targetId: string
 ): Promise<{ valid: boolean; name?: string; error?: string }> {
