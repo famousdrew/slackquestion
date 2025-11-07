@@ -10,6 +10,7 @@ export interface WorkspaceConfigData {
   answerDetectionMode: AnswerDetectionMode;
   firstEscalationMinutes: number;
   secondEscalationMinutes: number;
+  finalEscalationMinutes: number;
   escalationUserGroup: string | null;
   escalationChannelId: string | null;
 }
@@ -38,6 +39,7 @@ export async function getWorkspaceConfig(workspaceId: string): Promise<Workspace
     answerDetectionMode: (config.answerDetectionMode || 'emoji_only') as AnswerDetectionMode,
     firstEscalationMinutes: config.firstEscalationMinutes,
     secondEscalationMinutes: config.secondEscalationMinutes,
+    finalEscalationMinutes: config.finalEscalationMinutes,
     escalationUserGroup: config.escalationUserGroup || null,
     escalationChannelId: config.escalationChannelId || null,
   };
