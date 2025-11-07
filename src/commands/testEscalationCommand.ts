@@ -88,38 +88,41 @@ export function registerTestEscalationCommand(app: App) {
         message += '4. Mark it answered with ✅ when done\n';
       }
 
+      // Build blocks array
+      const blocks: any[] = [
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: message,
+          },
+        },
+      ];
+
+      // Add test button if targets are configured
+      if (totalTargets > 0) {
+        blocks.push({
+          type: 'actions',
+          elements: [
+            {
+              type: 'button',
+              text: {
+                type: 'plain_text',
+                text: '🧪 Send Test Notification',
+              },
+              action_id: 'send_test_notification',
+              style: 'primary',
+            },
+          ],
+        });
+      }
+
       // Send as ephemeral message
       await client.chat.postEphemeral({
         channel: command.channel_id,
         user: command.user_id,
         text: message,
-        blocks: [
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: message,
-            },
-          },
-          ...(totalTargets > 0
-            ? [
-                {
-                  type: 'actions',
-                  elements: [
-                    {
-                      type: 'button',
-                      text: {
-                        type: 'plain_text',
-                        text: '🧪 Send Test Notification',
-                      },
-                      action_id: 'send_test_notification',
-                      style: 'primary',
-                    },
-                  ],
-                },
-              ]
-            : []),
-        ],
+        blocks,
       });
     } catch (error) {
       logger.error('Error in test escalation command:', error);
