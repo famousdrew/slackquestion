@@ -14,6 +14,16 @@ import {
 import { ESCALATION_ENGINE, ESCALATION_LEVEL, QUESTION_STATUS } from '../utils/constants.js';
 import { buildThreadLink, getTeamDomain } from '../utils/slackHelpers.js';
 
+// Type for escalation execution results
+interface EscalationResult {
+  targetType: string;
+  targetId: string;
+  targetName?: string;
+  status: 'success' | 'failed' | 'skipped';
+  errorMessage?: string;
+  actionTaken?: string;
+}
+
 const CHECK_INTERVAL_MS = ESCALATION_ENGINE.CHECK_INTERVAL_MS;
 
 // Fallback environment variables for backwards compatibility
@@ -197,10 +207,9 @@ async function performEscalation(app: App, question: any, workspaceId: string, c
     }
 
     // Execute escalation for all targets in parallel
-    const actions = await Promise.all(
+    const results = await Promise.all(
       targets.map((target) => executeEscalationTarget(app, question, target, questionAge))
     );
-    const actionsTaken = actions.filter((action): action is string => action !== null);
 
     // Update escalation level
     await prisma.question.update({
@@ -211,59 +220,112 @@ async function performEscalation(app: App, question: any, workspaceId: string, c
       },
     });
 
-    // Log escalation
-    await prisma.escalation.create({
+    // Log escalation with events
+    const successfulActions = results.filter((r) => r.status === 'success');
+    const failedActions = results.filter((r) => r.status === 'failed');
+
+    const escalation = await prisma.escalation.create({
       data: {
         questionId: question.id,
         escalationLevel: nextLevel,
         suggestedUsers: [],
-        actionTaken: actionsTaken.join(', ') || 'escalated',
+        actionTaken: successfulActions.map(r => r.actionTaken).join(', ') || 'escalated',
         escalatedAt: new Date(),
       },
     });
 
-    console.log(
-      `⚠️  Level ${nextLevel} escalation: Question ${question.id} (${questionAge} min old) - ${actionsTaken.length} action(s) taken`
+    // Create detailed event logs for each target
+    await Promise.all(
+      results.map((result) =>
+        prisma.escalationEvent.create({
+          data: {
+            questionId: question.id,
+            escalationId: escalation.id,
+            targetType: result.targetType,
+            targetId: result.targetId,
+            targetName: result.targetName,
+            status: result.status,
+            errorMessage: result.errorMessage,
+          },
+        })
+      )
     );
+
+    console.log(
+      `⚠️  Level ${nextLevel} escalation: Question ${question.id} (${questionAge} min old) - ${successfulActions.length} success, ${failedActions.length} failed`
+    );
+
+    if (failedActions.length > 0) {
+      console.error(`   Failed targets: ${failedActions.map(f => `${f.targetType}:${f.targetId} (${f.errorMessage})`).join(', ')}`);
+    }
   } catch (error) {
     console.error(`Error in level ${question.escalationLevel + 1} escalation:`, error);
   }
 }
 
 /**
- * Execute escalation for a specific target
+ * Execute escalation for a specific target with detailed result tracking
  */
 async function executeEscalationTarget(
   app: App,
   question: any,
   target: EscalationTargetData,
   questionAge: number
-): Promise<string | null> {
+): Promise<EscalationResult> {
+  const channelId = question.channel.slackChannelId;
+  const channelName = question.channel.channelName || 'unknown channel';
+  const messageTs = question.slackMessageId;
+  const askerName = question.asker.displayName || question.asker.realName || 'someone';
+
   try {
-    const channelId = question.channel.slackChannelId;
-    const channelName = question.channel.channelName || 'unknown channel';
-    const messageTs = question.slackMessageId;
-    const askerName = question.asker.displayName || question.asker.realName || 'someone';
-
     switch (target.targetType) {
-      case 'user_group':
+      case 'user_group': {
         // Post in thread with user group mention
-        await app.client.chat.postMessage({
-          channel: channelId,
-          thread_ts: messageTs,
-          text: `⚠️ This question has been unanswered for ${questionAge} minutes.\n\n<!subteam^${target.targetId}> - Can someone help with this?`,
-        });
-        return `thread_post_group_${target.targetId}`;
+        try {
+          await app.client.chat.postMessage({
+            channel: channelId,
+            thread_ts: messageTs,
+            text: `⚠️ This question has been unanswered for ${questionAge} minutes.\n\n<!subteam^${target.targetId}> - Can someone help with this?`,
+          });
+          return {
+            targetType: target.targetType,
+            targetId: target.targetId,
+            targetName: target.targetName,
+            status: 'success',
+            actionTaken: `thread_post_group_${target.targetId}`,
+          };
+        } catch (error: any) {
+          return {
+            targetType: target.targetType,
+            targetId: target.targetId,
+            targetName: target.targetName,
+            status: 'failed',
+            errorMessage: error.message || 'Failed to post to thread with user group mention',
+          };
+        }
+      }
 
-      case 'user':
-        // Post in thread and DM the user
-        await app.client.chat.postMessage({
-          channel: channelId,
-          thread_ts: messageTs,
-          text: `⚠️ This question has been unanswered for ${questionAge} minutes.\n\n<@${target.targetId}> - Can you help with this?`,
-        });
+      case 'user': {
+        // Post in thread
+        try {
+          await app.client.chat.postMessage({
+            channel: channelId,
+            thread_ts: messageTs,
+            text: `⚠️ This question has been unanswered for ${questionAge} minutes.\n\n<@${target.targetId}> - Can you help with this?`,
+          });
+        } catch (error: any) {
+          return {
+            targetType: target.targetType,
+            targetId: target.targetId,
+            targetName: target.targetName,
+            status: 'failed',
+            errorMessage: `Failed to post to thread: ${error.message || 'unknown error'}`,
+          };
+        }
 
-        // Optionally send DM
+        // Try to send DM
+        let dmSent = false;
+        let dmError = null;
         try {
           const workspaceInfo = await app.client.team.info();
           const teamDomain = getTeamDomain(workspaceInfo);
@@ -273,32 +335,72 @@ async function executeEscalationTarget(
             channel: target.targetId,
             text: `🔔 You've been assigned to help with an unanswered question in #${channelName}:\n\n> ${question.messageText}\n\n<${threadLink}|View Thread →>`,
           });
-        } catch (dmError) {
-          console.warn(`Could not send DM to user ${target.targetId}:`, dmError);
+          dmSent = true;
+        } catch (error: any) {
+          dmError = error.message || 'Failed to send DM';
+          console.warn(`Could not send DM to user ${target.targetId}:`, error);
         }
-        return `thread_post_user_${target.targetId}`;
 
-      case 'channel':
+        return {
+          targetType: target.targetType,
+          targetId: target.targetId,
+          targetName: target.targetName,
+          status: 'success',
+          actionTaken: `thread_post_user_${target.targetId}${dmSent ? '_with_dm' : ''}`,
+          errorMessage: dmError ? `Thread posted successfully, but DM failed: ${dmError}` : undefined,
+        };
+      }
+
+      case 'channel': {
         // Post to escalation channel
-        const workspaceInfo = await app.client.team.info();
-        const teamDomain = getTeamDomain(workspaceInfo);
-        const threadLink = buildThreadLink(teamDomain, channelId, messageTs);
+        try {
+          const workspaceInfo = await app.client.team.info();
+          const teamDomain = getTeamDomain(workspaceInfo);
+          const threadLink = buildThreadLink(teamDomain, channelId, messageTs);
 
-        await app.client.chat.postMessage({
-          channel: target.targetId,
-          text: `🚨 *Unanswered Question Alert*\n\nQuestion from <@${question.asker.slackUserId}> in <#${channelId}> (${questionAge} minutes old):\n\n> ${question.messageText}\n\n<${threadLink}|View Thread →>`,
-          unfurl_links: false,
-          unfurl_media: false,
-        });
-        return `channel_post_${target.targetId}`;
+          await app.client.chat.postMessage({
+            channel: target.targetId,
+            text: `🚨 *Unanswered Question Alert*\n\nQuestion from <@${question.asker.slackUserId}> in <#${channelId}> (${questionAge} minutes old):\n\n> ${question.messageText}\n\n<${threadLink}|View Thread →>`,
+            unfurl_links: false,
+            unfurl_media: false,
+          });
+          return {
+            targetType: target.targetType,
+            targetId: target.targetId,
+            targetName: target.targetName,
+            status: 'success',
+            actionTaken: `channel_post_${target.targetId}`,
+          };
+        } catch (error: any) {
+          return {
+            targetType: target.targetType,
+            targetId: target.targetId,
+            targetName: target.targetName,
+            status: 'failed',
+            errorMessage: `Failed to post to channel: ${error.message || 'unknown error'}`,
+          };
+        }
+      }
 
       default:
         console.warn(`Unknown target type: ${target.targetType}`);
-        return null;
+        return {
+          targetType: target.targetType,
+          targetId: target.targetId,
+          targetName: target.targetName,
+          status: 'skipped',
+          errorMessage: `Unknown target type: ${target.targetType}`,
+        };
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error executing escalation target ${target.targetId}:`, error);
-    return null;
+    return {
+      targetType: target.targetType,
+      targetId: target.targetId,
+      targetName: target.targetName,
+      status: 'failed',
+      errorMessage: error.message || 'Unexpected error during escalation',
+    };
   }
 }
 

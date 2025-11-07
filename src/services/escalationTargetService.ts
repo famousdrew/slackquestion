@@ -257,43 +257,87 @@ export async function validateTarget(
   try {
     switch (targetType) {
       case 'user':
-        const userInfo = await client.users.info({ user: targetId });
-        if (userInfo.ok && userInfo.user) {
-          return {
-            valid: true,
-            name: userInfo.user.real_name || userInfo.user.name,
-          };
+        try {
+          const userInfo = await client.users.info({ user: targetId });
+          if (userInfo.ok && userInfo.user) {
+            if (userInfo.user.deleted) {
+              return { valid: false, error: 'This user has been deleted from the workspace' };
+            }
+            if (userInfo.user.is_bot) {
+              return { valid: false, error: 'Bots cannot be escalation targets. Please select a real user.' };
+            }
+            return {
+              valid: true,
+              name: userInfo.user.real_name || userInfo.user.name,
+            };
+          }
+          return { valid: false, error: 'User not found in this workspace' };
+        } catch (error: any) {
+          if (error.data?.error === 'user_not_found') {
+            return { valid: false, error: 'User not found in this workspace' };
+          }
+          throw error;
         }
-        return { valid: false, error: 'User not found' };
 
       case 'user_group':
-        const groupsInfo = await client.usergroups.list();
-        const group = groupsInfo.usergroups?.find((g: any) => g.id === targetId);
-        if (group) {
-          return {
-            valid: true,
-            name: `@${group.handle}`,
-          };
+        try {
+          const groupsInfo = await client.usergroups.list();
+          const group = groupsInfo.usergroups?.find((g: any) => g.id === targetId);
+          if (group) {
+            if (group.date_delete && group.date_delete > 0) {
+              return { valid: false, error: 'This user group has been deleted' };
+            }
+            return {
+              valid: true,
+              name: `@${group.handle}`,
+            };
+          }
+          return { valid: false, error: 'User group not found. Make sure the group exists and the bot has access to it.' };
+        } catch (error: any) {
+          if (error.data?.error === 'missing_scope') {
+            return { valid: false, error: 'Bot lacks permission to access user groups. Please reinstall the app with required permissions.' };
+          }
+          throw error;
         }
-        return { valid: false, error: 'User group not found' };
 
       case 'channel':
-        const channelInfo = await client.conversations.info({ channel: targetId });
-        if (channelInfo.ok && channelInfo.channel) {
-          return {
-            valid: true,
-            name: `#${channelInfo.channel.name}`,
-          };
+        try {
+          const channelInfo = await client.conversations.info({ channel: targetId });
+          if (channelInfo.ok && channelInfo.channel) {
+            if (channelInfo.channel.is_archived) {
+              return { valid: false, error: 'This channel has been archived. Please unarchive it or select a different channel.' };
+            }
+            // Check if bot is a member
+            if (!channelInfo.channel.is_member) {
+              return {
+                valid: false,
+                error: `Bot is not a member of #${channelInfo.channel.name}. Please add the bot to the channel first.`
+              };
+            }
+            return {
+              valid: true,
+              name: `#${channelInfo.channel.name}`,
+            };
+          }
+          return { valid: false, error: 'Channel not found or bot lacks access to it' };
+        } catch (error: any) {
+          if (error.data?.error === 'channel_not_found') {
+            return { valid: false, error: 'Channel not found. Make sure it exists and the bot has been added to it.' };
+          }
+          if (error.data?.error === 'missing_scope') {
+            return { valid: false, error: 'Bot lacks permission to access this channel. Please check bot permissions.' };
+          }
+          throw error;
         }
-        return { valid: false, error: 'Channel not found' };
 
       default:
-        return { valid: false, error: 'Invalid target type' };
+        return { valid: false, error: `Unknown target type: ${targetType}. Please contact support.` };
     }
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error validating target:', error);
     return {
       valid: false,
-      error: error instanceof Error ? error.message : 'Validation failed',
+      error: `Failed to validate target: ${error.message || 'Unknown error'}. Please try again.`,
     };
   }
 }

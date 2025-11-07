@@ -3,8 +3,22 @@
  * Provides onboarding and configuration status for workspace admins
  */
 import { App } from '@slack/bolt';
-import { ensureWorkspace } from '../utils/db.js';
+import { ensureWorkspace, prisma } from '../utils/db.js';
 import { getWorkspaceConfig } from '../services/configService.js';
+import { buildThreadLink, getTeamDomain } from '../utils/slackHelpers.js';
+
+/**
+ * Format time difference as human-readable string
+ */
+function getTimeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+
+  if (seconds < 60) return 'just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+  return date.toLocaleDateString();
+}
 
 export function registerAppHomeHandler(app: App) {
   app.event('app_home_opened', async ({ event, client, logger }) => {
@@ -23,6 +37,68 @@ export function registerAppHomeHandler(app: App) {
       const hasUserGroup = !!config.escalationUserGroup;
       const hasChannel = !!config.escalationChannelId;
       const isConfigured = hasUserGroup && hasChannel;
+
+      // Fetch recent escalation events
+      const recentEvents = await prisma.escalationEvent.findMany({
+        where: {
+          question: {
+            workspaceId: workspace.id,
+          },
+        },
+        include: {
+          question: {
+            include: {
+              channel: true,
+              asker: true,
+            },
+          },
+          escalation: true,
+        },
+        orderBy: {
+          notifiedAt: 'desc',
+        },
+        take: 10,
+      });
+
+      // Build escalation history blocks
+      const historyBlocks = [];
+      if (recentEvents.length > 0) {
+        const teamDomain = getTeamDomain(teamInfo);
+
+        for (const event of recentEvents) {
+          const question = event.question;
+          const threadLink = buildThreadLink(
+            teamDomain,
+            question.channel.slackChannelId,
+            question.slackMessageId
+          );
+
+          const statusEmoji = event.status === 'success' ? '✅' : event.status === 'failed' ? '❌' : '⏭️';
+          const targetTypeLabel =
+            event.targetType === 'user_group' ? 'User Group' :
+            event.targetType === 'user' ? 'User' : 'Channel';
+
+          const timeAgo = getTimeAgo(new Date(event.notifiedAt));
+
+          historyBlocks.push({
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `${statusEmoji} *Level ${event.escalation.escalationLevel}* → ${targetTypeLabel}${event.targetName ? ` (${event.targetName})` : ''}\n` +
+                    `<${threadLink}|View Question> • ${timeAgo}` +
+                    (event.errorMessage ? `\n⚠️ _${event.errorMessage}_` : ''),
+            },
+          });
+        }
+      } else {
+        historyBlocks.push({
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: '_No escalations yet. Questions will appear here once they start escalating._',
+          },
+        });
+      }
 
       // Build the home view
       await client.views.publish({
@@ -143,9 +219,25 @@ export function registerAppHomeHandler(app: App) {
                 text:
                   '• `/qr-config` - Configure escalation settings\n' +
                   '• `/qr-targets` - Manage escalation targets (users, groups, channels)\n' +
+                  '• `/qr-setup` - Unified setup wizard for new workspaces\n' +
+                  '• `/qr-test-escalation` - Test your escalation configuration\n' +
                   '• `/qr-stats` - View question statistics\n' +
                   '• `/qr-status` - Check a specific question status',
               },
+            },
+            {
+              type: 'divider',
+            },
+            {
+              type: 'header',
+              text: {
+                type: 'plain_text',
+                text: '📊 Recent Escalations',
+              },
+            },
+            ...historyBlocks,
+            {
+              type: 'divider',
             },
             {
               type: 'context',

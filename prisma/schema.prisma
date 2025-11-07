@@ -82,11 +82,12 @@ model Question {
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
-  workspace    Workspace     @relation(fields: [workspaceId], references: [id])
-  channel      Channel       @relation(fields: [channelId], references: [id])
-  asker        User          @relation("QuestionAsker", fields: [askerId], references: [id])
-  answerer     User?         @relation("QuestionAnswerer", fields: [answererId], references: [id])
-  escalations  Escalation[]
+  workspace         Workspace          @relation(fields: [workspaceId], references: [id])
+  channel           Channel            @relation(fields: [channelId], references: [id])
+  asker             User               @relation("QuestionAsker", fields: [askerId], references: [id])
+  answerer          User?              @relation("QuestionAnswerer", fields: [answererId], references: [id])
+  escalations       Escalation[]
+  escalationEvents  EscalationEvent[]
 
   @@map("questions")
 }
@@ -116,9 +117,30 @@ model Escalation {
   actionTaken     String?  @map("action_taken")
   escalatedAt     DateTime @default(now()) @map("escalated_at")
 
-  question Question @relation(fields: [questionId], references: [id])
+  question Question          @relation(fields: [questionId], references: [id])
+  events   EscalationEvent[]
 
   @@map("escalations")
+}
+
+model EscalationEvent {
+  id              String   @id @default(uuid())
+  questionId      String   @map("question_id")
+  escalationId    String   @map("escalation_id")
+  targetType      String   @map("target_type")     // 'user', 'user_group', 'channel'
+  targetId        String   @map("target_id")
+  targetName      String?  @map("target_name")
+  status          String   @default("pending")     // 'success', 'failed', 'skipped'
+  errorMessage    String?  @map("error_message") @db.Text
+  notifiedAt      DateTime @default(now()) @map("notified_at")
+
+  question   Question   @relation(fields: [questionId], references: [id])
+  escalation Escalation @relation(fields: [escalationId], references: [id])
+
+  @@index([questionId])
+  @@index([escalationId])
+  @@index([questionId, status])
+  @@map("escalation_events")
 }
 
 model WorkspaceConfig {
