@@ -74,7 +74,6 @@ export function registerMessageHandler(app: App) {
       const userData = {
         displayName: userInfo.user?.profile?.display_name || userInfo.user?.name,
         realName: userInfo.user?.profile?.real_name,
-        email: userInfo.user?.profile?.email,
       };
 
       // Ensure user exists

@@ -49,7 +49,6 @@ model User {
   slackUserId   String    @map("slack_user_id")
   displayName   String?   @map("display_name")
   realName      String?   @map("real_name")
-  email         String?
   isActive      Boolean   @default(true) @map("is_active")
   lastSeenAt    DateTime? @map("last_seen_at")
   createdAt     DateTime  @default(now()) @map("created_at")

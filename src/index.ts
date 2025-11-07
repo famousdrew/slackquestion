@@ -21,19 +21,6 @@ const app = new App({
   appToken: process.env.SLACK_APP_TOKEN,
 });
 
-// Debug: Log ALL incoming payloads
-app.use(async ({ payload, next, logger }) => {
-  logger.info(`📦 Received payload type: ${payload.type || 'unknown'}`);
-  logger.info(`📦 Payload: ${JSON.stringify(payload).substring(0, 200)}`);
-  await next();
-});
-
-// Debug: Log ALL events
-app.event(/.*/, async ({ event, logger }) => {
-  logger.info(`🔔 Event received: ${event.type}`);
-  logger.info(`Event data: ${JSON.stringify(event).substring(0, 300)}`);
-});
-
 // Register event handlers
 registerMessageHandler(app);
 registerReactionHandler(app);

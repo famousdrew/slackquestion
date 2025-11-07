@@ -36,7 +36,6 @@ export async function ensureUser(
   userData?: {
     displayName?: string;
     realName?: string;
-    email?: string;
   }
 ) {
   return await prisma.user.upsert({

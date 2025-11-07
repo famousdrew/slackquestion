@@ -52,7 +52,6 @@ export function registerReactionHandler(app: App) {
           const userData = {
             displayName: userInfo.user?.profile?.display_name || userInfo.user?.name,
             realName: userInfo.user?.profile?.real_name,
-            email: userInfo.user?.profile?.email,
           };
           const answerUser = await ensureUser(workspace.id, user, userData);
 
