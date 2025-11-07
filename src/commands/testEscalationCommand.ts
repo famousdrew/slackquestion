@@ -7,9 +7,6 @@ import { ensureWorkspace } from '../utils/db.js';
 import { getTargetsForLevel } from '../services/escalationTargetService.js';
 import { isWorkspaceAdmin, sendPermissionDenied } from '../utils/permissions.js';
 
-// Slack Block type
-type SlackBlock = Record<string, unknown>;
-
 export function registerTestEscalationCommand(app: App) {
   app.command('/qr-test-escalation', async ({ command, ack, client, logger }) => {
     await ack();
@@ -92,7 +89,7 @@ export function registerTestEscalationCommand(app: App) {
       }
 
       // Build blocks array
-      const blocks: SlackBlock[] = [
+      const blocks: any[] = [
         {
           type: 'section',
           text: {

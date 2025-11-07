@@ -14,13 +14,10 @@ import {
 } from '../services/escalationTargetService.js';
 import { isWorkspaceAdmin, sendPermissionDenied } from '../utils/permissions.js';
 
-// Slack Block type
-type SlackBlock = Record<string, unknown>;
-
 /**
  * Helper function to generate targets list blocks
  */
-async function buildTargetsListBlocks(workspaceId: string): Promise<SlackBlock[]> {
+async function buildTargetsListBlocks(workspaceId: string): Promise<any[]> {
   const targets = await getEscalationTargets(workspaceId);
 
   // Group targets by level
@@ -33,7 +30,7 @@ async function buildTargetsListBlocks(workspaceId: string): Promise<SlackBlock[]
   }
 
   // Build message blocks
-  const blocks: SlackBlock[] = [
+  const blocks: any[] = [
     {
       type: 'header',
       text: {
