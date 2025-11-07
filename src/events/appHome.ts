@@ -237,16 +237,16 @@ export function registerAppHomeHandler(app: App) {
             ...(customChannels.length > 0
               ? [
                   {
-                    type: 'header',
+                    type: 'header' as const,
                     text: {
-                      type: 'plain_text',
+                      type: 'plain_text' as const,
                       text: '⚙️ Channel-Specific Settings',
                     },
                   },
                   {
-                    type: 'section',
+                    type: 'section' as const,
                     text: {
-                      type: 'mrkdwn',
+                      type: 'mrkdwn' as const,
                       text: customChannels
                         .slice(0, 5)
                         .map((ch) => `• *#${ch.channelName}* - Custom escalation settings`)
@@ -256,10 +256,10 @@ export function registerAppHomeHandler(app: App) {
                   ...(customChannels.length > 5
                     ? [
                         {
-                          type: 'context',
+                          type: 'context' as const,
                           elements: [
                             {
-                              type: 'mrkdwn',
+                              type: 'mrkdwn' as const,
                               text: `_and ${customChannels.length - 5} more..._`,
                             },
                           ],
@@ -267,7 +267,7 @@ export function registerAppHomeHandler(app: App) {
                       ]
                     : []),
                   {
-                    type: 'divider',
+                    type: 'divider' as const,
                   },
                 ]
               : []),
