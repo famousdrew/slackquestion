@@ -6,6 +6,7 @@ import { App } from '@slack/bolt';
 import { ensureWorkspace, prisma } from '../utils/db.js';
 import { getWorkspaceConfig } from '../services/configService.js';
 import { buildThreadLink, getTeamDomain } from '../utils/slackHelpers.js';
+import { getChannelsWithCustomSettings } from '../services/channelConfigService.js';
 
 /**
  * Format time difference as human-readable string
@@ -59,6 +60,9 @@ export function registerAppHomeHandler(app: App) {
         },
         take: 10,
       });
+
+      // Fetch channels with custom settings
+      const customChannels = await getChannelsWithCustomSettings(workspace.id);
 
       // Build escalation history blocks
       const historyBlocks = [];
@@ -219,6 +223,8 @@ export function registerAppHomeHandler(app: App) {
                 text:
                   '• `/qr-config` - Configure escalation settings\n' +
                   '• `/qr-targets` - Manage escalation targets (users, groups, channels)\n' +
+                  '• `/qr-channel-config` - Override settings for specific channels\n' +
+                  '• `/qr-channels` - List channels with custom settings\n' +
                   '• `/qr-setup` - Unified setup wizard for new workspaces\n' +
                   '• `/qr-test-escalation` - Test your escalation configuration\n' +
                   '• `/qr-stats` - View question statistics\n' +
@@ -228,6 +234,43 @@ export function registerAppHomeHandler(app: App) {
             {
               type: 'divider',
             },
+            ...(customChannels.length > 0
+              ? [
+                  {
+                    type: 'header',
+                    text: {
+                      type: 'plain_text',
+                      text: '⚙️ Channel-Specific Settings',
+                    },
+                  },
+                  {
+                    type: 'section',
+                    text: {
+                      type: 'mrkdwn',
+                      text: customChannels
+                        .slice(0, 5)
+                        .map((ch) => `• *#${ch.channelName}* - Custom escalation settings`)
+                        .join('\n'),
+                    },
+                  },
+                  ...(customChannels.length > 5
+                    ? [
+                        {
+                          type: 'context',
+                          elements: [
+                            {
+                              type: 'mrkdwn',
+                              text: `_and ${customChannels.length - 5} more..._`,
+                            },
+                          ],
+                        },
+                      ]
+                    : []),
+                  {
+                    type: 'divider',
+                  },
+                ]
+              : []),
             {
               type: 'header',
               text: {
