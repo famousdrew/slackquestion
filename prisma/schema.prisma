@@ -134,6 +134,7 @@ model WorkspaceConfig {
   finalEscalationUserId     String?  @map("final_escalation_user_id")
   escalationUserGroup       String?  @map("escalation_user_group")
   escalationChannelId       String?  @map("escalation_channel_id")
+  migratedToTargets         Boolean  @default(false) @map("migrated_to_targets")
   settings                  Json?
   createdAt                 DateTime @default(now()) @map("created_at")
   updatedAt                 DateTime @updatedAt @map("updated_at")
