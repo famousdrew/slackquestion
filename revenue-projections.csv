@@ -1,0 +1,167 @@
+Year 1 Projections - Monthly Breakdown,,,,,,,,,,,
+Month,New Signups,Total Free Users,Conversion Rate,New Paid Customers,Total Paid Customers,Monthly Churn,Churned Customers,Starter (Per-User) Count,Professional Count,Business Count,Enterprise Count,MRR,Cumulative Revenue,Infrastructure Cost,Payment Processing (3%),Net Profit
+1,20,20,5%,1,1,0%,0,0,1,0,0,149,149,36,4,109
+2,30,50,4%,1,2,3%,0,1,1,0,0,298,447,36,9,253
+3,45,95,4%,2,4,3%,0,2,2,0,0,596,1043,36,18,542
+4,60,155,4%,3,7,3%,0,3,4,0,0,1043,1886,50,31,962
+5,90,245,4%,4,11,3%,0,5,6,0,0,1639,3278,50,49,1540
+6,120,365,4%,5,16,3%,0,7,8,1,0,2584,5413,50,78,2456
+7,150,515,4%,6,22,3%,1,9,11,1,1,3978,8876,70,119,3789
+8,180,695,4%,7,29,3%,1,12,14,2,1,5516,13697,70,165,5281
+9,220,915,4%,9,38,3%,1,16,18,3,1,7352,20284,100,221,7031
+10,260,1175,4%,10,48,3%,1,20,23,4,1,9486,28534,100,285,9101
+11,310,1485,4%,12,60,3%,2,26,28,4,2,12118,39366,100,364,11654
+12,370,1855,4%,14,74,3%,2,32,34,6,2,15246,53346,100,457,14689
+
+Year 1 Summary,,,,,,,,,,,
+Metric,Value,Notes,,,,,,,,,,
+Total Signups Year 1,1855,Cumulative free users at end of year,,,,,,,,,,
+Total Paid Customers,74,End of year,,,,,,,,,,
+Average MRR Growth Rate,62%,Average month-over-month growth,,,,,,,,,,
+End of Year MRR,15246,Monthly recurring revenue at month 12,,,,,,,,,,
+End of Year ARR,182952,Run-rate annual recurring revenue,,,,,,,,,,
+Total Revenue Year 1,53346,Actual cash collected,,,,,,,,,,
+Average Infrastructure Cost,69,Per month average,,,,,,,,,,
+Total Infrastructure Cost Year 1,828,All infrastructure for the year,,,,,,,,,,
+Total Payment Processing Year 1,1800,3% of revenue to Stripe,,,,,,,,,,
+Gross Margin Year 1,95%,After infrastructure + payments,,,,,,,,,,
+Net Profit Year 1,50718,Before salary/team costs,,,,,,,,,,
+Free to Paid Conversion,4%,Target conversion rate,,,,,,,,,,
+Monthly Churn Rate,3%,Slightly high initially,,,,,,,,,,
+
+Customer Mix Breakdown (Month 12),,,,,,,,,,,
+Plan,Count,% of Total,ARPU,Total MRR,Notes,,,,,,,,
+Starter (Per-User),32,43%,60,1920,Average 15 users per team,,,,,,,,
+Professional,34,46%,149,5066,Largest revenue driver,,,,,,,,
+Business,6,8%,399,2394,Growing mid-market,,,,,,,,
+Enterprise,2,3%,2800,5600,2 deals closed in year 1,,,,,,,,
+Add-Ons Revenue,N/A,N/A,N/A,266,~15% of customers buy add-ons,,,,,,,,
+TOTAL,74,100%,206,15246,Blended ARPU,,,,,,,,
+
+Year 2 Projections - Quarterly,,,,,,,,,,,
+Quarter,New Signups,Total Free Users,New Paid Customers,Total Paid Customers,Churn,Starter Count,Professional Count,Business Count,Enterprise Count,Quarterly MRR Average,Quarterly Revenue,Infrastructure Cost,Net Profit
+Q1 (M13-15),1400,3255,42,116,3%,48,52,12,4,22384,67152,350,65082
+Q2 (M16-18),1700,4955,52,168,3%,68,75,18,7,33264,99792,500,96542
+Q3 (M19-21),2100,7055,64,232,2.5%,92,105,26,9,47232,141696,700,137146
+Q4 (M22-24),2600,9655,78,310,2.5%,118,140,38,14,64736,194208,1000,187608
+
+Year 2 Summary,,,,,,,,,,,
+Metric,Value,Notes,,,,,,,,,,
+Total Signups Year 2,7800,Cumulative new signups in year 2,,,,,,,,,,
+Total Paid Customers End Y2,310,4x growth from year 1,,,,,,,,,,
+End of Year 2 MRR,64736,Monthly recurring revenue,,,,,,,,,,
+End of Year 2 ARR,776832,Run-rate annual recurring revenue,,,,,,,,,,
+Total Revenue Year 2,502848,Actual cash collected,,,,,,,,,,
+Average Churn Rate,2.75%,Improving over time,,,,,,,,,,
+Gross Margin Year 2,96%,Economies of scale kicking in,,,,,,,,,,
+Infrastructure Cost Year 2,7500,Scales with customers but slower than revenue,,,,,,,,,,
+
+3-Year Financial Model,,,,,,,,,,,
+Metric,Year 1,Year 2,Year 3,Notes,,,,,,,,
+Total Signups,1855,7800,18000,Accelerating growth with product-market fit,,,,,,,,
+Paid Customers (End of Year),74,310,850,Compounding growth,,,,,,,,
+MRR (End of Year),15246,64736,187000,4-5x YoY growth,,,,,,,,
+ARR (End of Year),182952,776832,2244000,Over $2M ARR in year 3,,,,,,,,
+Total Revenue,53346,502848,1650000,Cash collected that year,,,,,,,,
+Infrastructure Costs,828,7500,35000,Growing but manageable,,,,,,,,
+Gross Profit,50718,486848,1590000,Before team salaries,,,,,,,,
+Gross Margin,95%,96.8%,96.4%,High margin SaaS business,,,,,,,,
+Break-Even Month,3-4,Already profitable,Already profitable,Quick path to profitability,,,,,,,,
+
+Revenue by Customer Segment,,,,,,,,,,,
+Segment,Year 1 Mix,Year 1 Revenue,Year 2 Mix,Year 2 Revenue,Year 3 Mix,Year 3 Revenue,Growth Strategy,,,,,,
+Starter (Per-User),43%,22896,38%,191082,30%,495000,Declining % as customers grow into Professional,,,,,,
+Professional,46%,24538,48%,241368,50%,825000,Core revenue driver,,,,,,
+Business,8%,4268,11%,55314,15%,247500,Growing mid-market segment,,,,,,
+Enterprise,3%,1644,3%,15084,5%,82500,Strategic focus in year 3,,,,,,
+TOTAL,100%,53346,100%,502848,100%,1650000,Blended growth,,,,,,
+
+Customer Acquisition Cost (CAC) Analysis,,,,,,,,,,,
+Channel,CAC Year 1,CAC Year 2,CAC Year 3,Conversion Rate,Payback Period,LTV,LTV:CAC Ratio,Recommended Spend,Notes,,,
+Organic (Free),0,0,0,5%,0 months,5364,Infinite,Focus here,"Content, SEO, directory listings",,,
+Product-Led Growth,50,50,50,8%,1 month,7152,143x,High priority,"In-app prompts, emails, onboarding",,,
+Content Marketing,200,150,100,4%,3 months,5364,27x,Medium,"Blog posts, case studies, guides",,,
+Paid Search,400,350,300,2%,5 months,5364,13x,Low initially,"Google Ads for high-intent keywords",,,
+Outbound Sales,800,600,400,10%,9 months,10728,13x,Year 2+,"Target mid-market, enterprise",,,
+Partnerships,300,250,200,6%,4 months,7152,24x,Year 2+,"Integration partners, co-marketing",,,
+Social/Community,150,100,75,3%,3 months,5364,36x,Low effort,"Reddit, Indie Hackers, Product Hunt",,,
+
+Unit Economics Assumptions,,,,,,,,,,,
+Metric,Value,Calculation,Notes,,,,,,,,
+Average Revenue Per User (ARPU),206,Blended across all tiers,Mix of per-user and flat-rate,,,,,,,,
+Customer Lifetime (months),36,Based on 3% monthly churn,Improves to 40 months at 2.5% churn,,,,,,
+Customer Lifetime Value (LTV),7416,ARPU × Lifetime,Varies by tier,,,,,,,,
+Gross Margin,96%,After infrastructure + payments,Incredibly high for SaaS,,,,,,,,
+LTV after costs,7120,LTV × Gross Margin,What you actually keep,,,,,,,,
+Target CAC,890,LTV / 8,Conservative 8x LTV:CAC ratio,,,,,,,,
+Target CAC (aggressive),1424,LTV / 5,Aggressive 5x for growth,,,,,,,,
+Months to Recover CAC,4.3,CAC / (ARPU × Margin),Quick payback is good,,,,,,,,
+
+Sensitivity Analysis - What If Scenarios,,,,,,,,,,,
+Scenario,Assumption Change,Year 1 MRR Impact,Year 1 ARR Impact,Year 2 ARR Impact,Probability,Action Required,Notes,,,,,
+Base Case,Current assumptions,15246,182952,776832,60%,None,Realistic baseline,,,,,
+Best Case,Conversion 6% (vs 4%),19058,228696,1165248,20%,Perfect onboarding,Better than expected product-market fit,,,,,
+Best Case,Churn 2% (vs 3%),16341,196092,874188,20%,Excellent customer success,Customers love it,,,,,
+Worst Case,Conversion 2% (vs 4%),7623,91476,388416,15%,Improve onboarding,Need better free’paid conversion,,,,,
+Worst Case,Churn 5% (vs 3%),13711,164532,631476,10%,Fix product issues,High churn means product problems,,,,,
+Pricing Increase,Raise Pro to $179 (+30),18295,219540,931392,40%,Market validation,Test willingness to pay higher,,,,,
+Per-User Only,Remove flat-rate,11447,137364,582552,30%,Different positioning,Lower revenue overall,,,,,
+Flat-Rate Only,Remove per-user,19058,228696,970368,35%,Different positioning,May lose small customers,,,,,
+
+Cash Flow Projections,,,,,,,,,,,
+Month,Revenue,Costs,Net Cash Flow,Cumulative Cash,Runway (months),Notes,,,,,,
+1,149,5086,-4937,-4937,0,Burning cash initially,,,,,,
+2,298,5086,-4788,-9725,0,Still burning,,,,,,
+3,596,5086,-4490,-14215,0,Improving but negative,,,,,,
+4,1043,5136,-4093,-18308,0,Getting closer,,,,,,
+5,1639,5136,-3497,-21805,0,Approaching break-even,,,,,,
+6,2584,5136,-2552,-24357,0,Almost there,,,,,,
+12,15246,5157,10089,12387,2.5,Cash flow positive!,,,,,,
+24,64736,16200,48536,252384,5.1,Strong positive cash flow,,,,,,
+
+Assumptions for Cash Flow,,,,,,,,,,,
+Item,Amount,Notes,,,,,,,,,,
+Your Salary,5000,Opportunity cost / living expenses,,,,,,,,,,
+Infrastructure (Month 1-6),50,Supabase Pro + Railway Hobby,,,,,,,,,,
+Infrastructure (Month 7-12),100,Scaling up as customer count grows,,,,,,,,,,
+Tools & Software,36,GitHub, domain, monitoring,,,,,,,,,,
+Marketing Budget,0,Organic only in year 1,,,,,,,,,,
+Emergency Buffer,10000,Recommended cash reserve,,,,,,,,,,
+
+Key Metrics to Track,,,,,,,,,,,
+Metric,Goal Year 1,Goal Year 2,How to Measure,Why It Matters,Red Flag,Green Flag,Action if Red,,,,
+Signups per month,150,650,Analytics,Top of funnel,<50/month,>200/month,Increase marketing,,,,
+Activation rate,80%,85%,% who detect 1st question,"Product works, users engaged",<60%,>85%,Improve onboarding,,,,
+Free’Paid conversion,4%,5%,% of free users who pay within 30d,Revenue driver,<2%,>6%,Optimize upgrade prompts,,,,
+Monthly churn,3%,2.5%,% customers who cancel each month,Retention health,>5%,<2%,Talk to churning customers,,,,
+ARPU,206,220,Average revenue per user,Pricing effectiveness,<$100,>$250,Upsell or raise prices,,,,
+LTV:CAC ratio,8:1,10:1,Lifetime value / acquisition cost,Marketing efficiency,<3:1,>10:1,Reduce CAC or improve retention,,,,
+Gross margin,95%,96%,"(Revenue - Infrastructure - Processing) / Revenue",Profitability,<85%,>95%,Optimize infrastructure,,,,
+Net Revenue Retention,110%,120%,Revenue from cohort vs last year including expansion,Growth health,<100%,>120%,Focus on expansion revenue,,,,
+Questions tracked/day,5000,25000,Total questions in system,Product usage,<1000,>10000,More customers or better detection,,,,
+Support ticket volume,<10/week,<20/week,Tickets per 100 customers,Product quality,>50/week,<5/week,Fix common issues,,,,
+
+Cohort Analysis Template,,,,,,,,,,,
+Cohort Month,Customers at Start,Month 1 Retention,Month 3 Retention,Month 6 Retention,Month 12 Retention,Avg LTV,Notes,,,,,
+Jan 2025,1,100%,97%,94%,91%,6552,First customer!,,,,,
+Feb 2025,2,100%,95%,92%,88%,6336,Early adopters,,,,,
+Mar 2025,4,100%,94%,90%,86%,6192,Good retention,,,,,
+Apr 2025,7,100%,93%,88%,84%,6048,Retention improving with product fixes,,,,,
+May 2025,11,100%,93%,88%,84%,6048,Stable cohort,,,,,
+Jun 2025,16,100%,94%,89%,85%,6120,Product-market fit signal,,,,,
+
+Pricing Experiments to Run,,,,,,,,,,,
+Experiment,Hypothesis,How to Test,Sample Size Needed,Duration,Success Metric,Rollout Plan,,,,,,
+Per-user vs Flat-rate,Both models attract different segments,A/B test landing page,200 signups,2 months,Conversion rate,Keep both options,,,,,,
+Free tier limit,50 questions creates urgency to upgrade,"Test 30, 50, 100 questions",300 signups,3 months,Time to paid conversion,Choose optimal limit,,,,,,
+Professional price,"$149 is acceptable, could go higher","Test $149, $179, $199",200 conversions,3 months,Conversion rate × ARPU,Increase if minimal impact,,,,,,
+Annual discount,"16.7% (2 months free) drives annual","Test 15%, 20%, 25%",100 paid customers,2 months,% choosing annual,Optimize discount level,,,,,,
+Add-on pricing,Integrations have 20-30% attach rate,Offer to customers who mention Jira,50 customers,1 month,% who buy add-on,Launch integrations marketplace,,,,,,
+
+Recommended Pricing (Final),,,,,,,,,,,
+Plan,Price,When to Choose,Expected % of Customers,Why This Works,,,,,,,,
+Free,$0/month,Testing or <10 questions/month,80%,Drives signups and word-of-mouth,,,,,,,,
+Starter,$4/user/month,3-25 person teams,30%,Low barrier to entry,,,,,,,,
+Professional,$149/month,25+ person teams or 38+ users,50%,Best value delivers most revenue,,,,,,,,
+Business,$399/month,100+ person teams needing multi-workspace,15%,Anchoring + mid-market capture,,,,,,,,
+Enterprise,$1500+/month,500+ person companies,5%,High-touch high-value deals,,,,,,,,

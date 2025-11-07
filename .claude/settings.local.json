@@ -5,7 +5,21 @@
       "Bash(npm install:*)",
       "Bash(git init:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run prisma:generate:*)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(npx prisma db push:*)",
+      "Bash(npm run dev:*)",
+      "Bash(node get-usergroups.js:*)",
+      "Bash(node get-channels.js:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(del nul 2)",
+      "Bash(nul)",
+      "Bash(start pricing-page-mockup.html)"
     ],
     "deny": [],
     "ask": []

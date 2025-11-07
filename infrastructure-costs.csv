@@ -1,0 +1,139 @@
+Infrastructure Component,Stage 1 (0-50 customers),Stage 2 (50-200 customers),Stage 3 (200-500 customers),Stage 4 (500-1000 customers),Stage 5 (1000+ customers),Provider,Notes
+Database (Supabase),25,25,25,599,599,Supabase,"Pro tier handles 600 customers, Team tier for 1000+"
+Compute - Primary (Railway/Render),10,30,120,250,400,Railway,Multiple instances as you scale
+Redis Cache,0,0,10,50,100,Upstash,Not needed until Stage 3
+Load Balancer,0,0,0,20,50,Cloudflare,"Included in Railway initially, separate at scale"
+Domain & DNS,1,1,1,1,1,Namecheap,.com domain
+SSL Certificate,0,0,0,0,0,Let's Encrypt,Free via Railway/Cloudflare
+Monitoring & Logging,0,7,29,99,99,Better Stack,"Free tier initially, paid for production"
+Error Tracking,0,0,0,26,26,Sentry,Free tier covers early stages
+Uptime Monitoring,0,7,7,0,0,Better Uptime,Included in Better Stack at Stage 4
+Backup Storage (S3),0,0,5,30,50,AWS S3,Database backups and exports
+CDN,0,0,0,20,20,Cloudflare,Free tier initially
+Status Page,0,0,0,29,29,StatusPage.io,Important for enterprise customers
+APM (Application Monitoring),0,0,0,0,149,DataDog,Needed at enterprise scale
+TOTAL INFRASTRUCTURE,36,70,197,1124,1523,,
+
+Development Tools,,,,,,,
+GitHub,0,4,12,20,50,GitHub,Pro accounts for team
+Vercel (Dashboard),0,0,20,20,20,Vercel,For web dashboard
+Postman,0,0,0,0,49,Postman,API testing
+Linear/Jira,0,0,15,15,15,Linear,Project management
+Figma,0,0,15,15,15,Figma,Design collaboration
+TOTAL DEV TOOLS,0,4,62,70,149,,
+
+Customer Success Tools,,,,,,,
+Support Chat,0,0,74,74,149,Intercom,Free tier then Starter then Growth
+Email Service,0,0,15,15,50,SendGrid,Transactional emails
+Customer Portal,0,0,0,20,99,Stripe Billing,Self-service billing
+Payments Processing (Stripe),3% + $0.30,3% + $0.30,3% + $0.30,3% + $0.30,3% + $0.30,Stripe,Variable cost based on revenue
+TOTAL CS TOOLS,Variable,Variable,89,109,298,,
+
+Analytics & Business Intelligence,,,,,,,
+Product Analytics,0,0,0,49,249,Mixpanel,Free tier then Growth
+Customer Data Platform,0,0,0,0,300,Segment,Needed at enterprise scale
+Marketing Analytics,0,0,0,0,99,Google Analytics 360,Optional for marketing
+TOTAL ANALYTICS,0,0,0,49,648,,
+
+Security & Compliance,,,,,,,
+SOC2 Compliance,0,0,0,0,400,Vanta,Required for enterprise sales
+Security Scanning,0,0,0,29,99,Snyk,Dependency scanning
+Penetration Testing,0,0,0,0,2000,Annual cost,"$2000/year = $167/month, done annually"
+TOTAL SECURITY,0,0,0,29,666,,
+
+GRAND TOTAL (Fixed Costs),36,74,348,1381,3284,,
+Cost Per Customer,3.60,0.74,1.16,1.84,2.19,,"Decreases with scale, then increases with enterprise features"
+
+Infrastructure Breakdown by Provider,,,,,,,
+Provider,Service,Free Tier,Paid Tier,When to Upgrade,Cost at Scale,Recommendation,Notes
+Supabase,PostgreSQL Database,500 MB,Pro: $25/mo,Immediately,Team: $599/mo at 500+ customers,Use Pro from day 1,Generous free tier but pause after 7 days
+Railway,Application Hosting,$5 credit,Pro: $20/mo base + usage,50+ customers,$500/mo at 1000+ customers,Start with Hobby $5/mo,Best DX for Node.js
+Render,Application Hosting (Alternative),Free tier,Starter: $7/mo,50+ customers,$300/mo at 1000+ customers,Good Railway alternative,Slightly cheaper than Railway
+Upstash,Serverless Redis,10K commands/day,Pay as you go,200+ customers,$280/mo at 1000+ customers,Use free tier initially,Only needed for job queue
+Cloudflare,CDN + DDoS,Unlimited bandwidth,Pro: $20/mo,500+ customers,Pro: $20/mo,Use free tier initially,Amazing free tier
+Better Stack,Monitoring + Logs,Free basic,Startup: $29/mo,100+ customers,Business: $99/mo,Use free initially,All-in-one monitoring
+Sentry,Error Tracking,5K events/mo,Team: $26/mo,200+ customers,Business: $80/mo,Use free initially,Essential for debugging
+Stripe,Payments,Pay per transaction,2.9% + $0.30,Day 1,Same rate,Use from day 1,Industry standard
+Intercom,Customer Support,Free 14 days,Starter: $74/mo,50+ customers,Growth: $149/mo,Use free Slack initially,Can delay until 50 customers
+SendGrid,Email Delivery,100 emails/day,Essentials: $15/mo,Day 1,Pro: $90/mo at 1000+ customers,Use Essentials from day 1,Transactional emails needed
+Mixpanel,Product Analytics,20M events/mo,Growth: $49/mo,200+ customers,Enterprise: $249/mo,Use free initially,Great for user behavior
+Vanta,SOC2 Compliance,N/A,Starter: $400/mo,When selling to enterprise,Starter: $400/mo,Only when needed,Required for enterprise deals
+StatusPage.io,Status Page,N/A,Startup: $29/mo,500+ customers,Business: $99/mo,Only when needed,Professional appearance
+
+Hosting Provider Comparison,,,,,,,
+Provider,Plan,RAM,CPU,Monthly Cost,Ease of Use,Recommendation,Best For
+Railway,Hobby,$5 credit/mo,Shared,$5-20,Excellent,RECOMMENDED,0-50 customers
+Railway,Pro,$20 credit + usage,Shared,$30-100,Excellent,RECOMMENDED,50-500 customers
+Render,Starter,0.5 GB,Shared,$7,Good,Alternative,Testing
+Render,Standard,2 GB,Shared,$25,Good,Alternative,50-200 customers
+Render,Pro,4 GB,Dedicated,$85,Good,Alternative,200-500 customers
+DigitalOcean,Basic Droplet,1 GB,1 vCPU,$6,Moderate,DIY Option,If you want control
+DigitalOcean,General Purpose,4 GB,2 vCPU,$48,Moderate,DIY Option,100-500 customers
+AWS EC2,t3.small,2 GB,2 vCPU,$15,Complex,Not Recommended,Only if already using AWS
+AWS EC2,t3.medium,4 GB,2 vCPU,$30,Complex,Not Recommended,Better options exist
+Heroku,Eco,512 MB,Shared,$5,Excellent,Deprecated,Heroku shut down free tier
+Fly.io,Shared CPU,256 MB,$3 credit,$5-20,Good,Alternative,Similar to Railway
+
+Database Provider Comparison,,,,,,,
+Provider,Plan,Storage,Connections,Monthly Cost,Backups,Recommendation,Notes
+Supabase,Free,500 MB,Direct,0,None,Dev only,Pauses after 7 days inactivity
+Supabase,Pro,8 GB,Direct,25,7 day,RECOMMENDED,Best for 0-500 customers
+Supabase,Team,100 GB,Pooled,599,PITR,RECOMMENDED,Best for 500+ customers
+Neon,Free,3 GB,Pooled,0,None,Alternative,Good free tier
+Neon,Pro,Unlimited,Pooled,19,7 day,Alternative,Cheaper than Supabase
+PlanetScale,Free,5 GB,1000/day,0,None,Alternative,Great for scale but more complex
+PlanetScale,Scaler,50 GB,100K rows read/s,29,1 day,Alternative,Vitess-based (different from Postgres)
+Railway,PostgreSQL,Usage-based,Direct,~$10-20,Manual,Not Recommended,More expensive than Supabase
+Render,PostgreSQL,10 GB,Pooled,7,None,Not Recommended,Limited features
+AWS RDS,db.t3.micro,20 GB,Direct,~$15,Automated,Complex,Overkill for early stage
+
+Redis Provider Comparison,,,,,,,
+Provider,Plan,Memory,Monthly Cost,Commands/Day,When to Use,Recommendation,Notes
+Upstash,Free,Free,0,10K,Development,RECOMMENDED,Generous free tier
+Upstash,Pay as you go,Usage-based,~$10-50,Millions,Production <500 customers,RECOMMENDED,Serverless pricing
+Upstash,Pro-2K,2 GB,280,2M per day,Production 500+ customers,RECOMMENDED,Predictable pricing
+Railway,Redis,Usage-based,~$10-30,Unlimited,Production,Alternative,Simple to add
+Redis Cloud,Free,30 MB,0,30 ops/sec,Development,Not Recommended,Too limited
+Redis Cloud,Essentials,250 MB,7,1K ops/sec,Testing,Not Recommended,Expensive for what you get
+AWS ElastiCache,cache.t3.micro,0.5 GB,~$13,Unlimited,Production,Complex,Only if on AWS already
+
+Payment Processing Comparison,,,,,,,
+Provider,Transaction Fee,Monthly Fee,International Fee,Setup Complexity,Recommendation,Notes
+Stripe,2.9% + $0.30,0,+1.5%,Easy,RECOMMENDED,Industry standard
+Paddle,5% + $0.50,0,Included,Easy,Not Recommended,Higher fees
+PayPal,3.49% + $0.49,0,Variable,Easy,Not Recommended,Unprofessional for SaaS
+Braintree,2.9% + $0.30,0,+1%,Moderate,Alternative,Owned by PayPal
+Chargebee,2.9% + $0.30,0,+1%,Moderate,Alternative,Includes billing mgmt
+
+Cost Optimization Tips,,,,,,,
+Stage,Optimization,Potential Savings,Implementation Effort,Priority,Recommendation,,
+Early (0-50),Use all free tiers,$50-100/mo,Low,High,Delay paid tools until necessary,,
+Early (0-50),Combine monitoring tools,$30/mo,Low,High,Use Better Stack instead of multiple tools,,
+Growth (50-200),Annual billing for tools,$100/mo,None,Medium,Save ~16% on annual plans,,
+Growth (50-200),Use Cloudflare Free,$20/mo,Low,Medium,Free CDN + DDoS protection,,
+Scale (200-500),Optimize database queries,$200/mo,High,High,Avoid upgrading DB too early,,
+Scale (200-500),Implement caching,$100/mo,Medium,High,Reduce database load,,
+Scale (500+),Use read replicas,$300/mo,High,Medium,Cheaper than scaling primary,,
+Scale (500+),Compress stored data,$100/mo,Medium,Low,Reduce storage costs,,
+All Stages,Reserved instances (annual),$500/mo,None,Low,Only at 1000+ customers,,
+All Stages,Optimize image/asset delivery,$50/mo,Medium,Low,Use CDN + compression,,
+
+Break-Even Analysis,,,,,,,
+Monthly Costs,Customers Needed to Break-Even,Average Revenue Per Customer,Monthly Revenue at Break-Even,Time to Break-Even (estimated),Margin at Break-Even,,
+$500 (solo + infrastructure),4 customers,$149,$596,Month 3-4,84%,,
+$2000 (you + infrastructure),14 customers,$149,$2086,Month 5-7,76%,,
+$5000 (small team + infrastructure),34 customers,$149,$5066,Month 8-10,75%,,
+$10000 (growing team),67 customers,$149,$9983,Month 10-12,80%,,
+$20000 (established team),134 customers,$149,$19966,Month 14-18,85%,,
+
+Monthly Fixed Costs Breakdown,,,,,,,
+Cost Category,Launch (Solo),Growth (Small Team),Scale (Full Team),Enterprise,Notes,,
+Your Salary/Opportunity Cost,5000,8000,15000,30000,Adjust based on your situation,,
+Engineer #2,0,8000,16000,32000,Add at 50+ customers,,
+Designer/Product,0,0,8000,16000,Add at 200+ customers,,
+Sales/Marketing,0,0,8000,24000,Add at 200+ customers for outbound,,
+Customer Success,0,0,6000,18000,Add at 500+ customers,,
+Infrastructure,50,100,500,2000,From infrastructure table above,,
+Tools & Software,0,100,400,1200,Development + CS tools,,
+TOTAL MONTHLY BURN,5050,16200,53900,123200,"Adjust based on your market, location",,
+Customers Needed (at $149 ARPU),34,109,362,827,"After payment processing (3%), infrastructure",,

@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slack Question Router - Pricing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            max-width: 700px;
+            margin: 0 auto 30px;
+        }
+
+        .toggle-container {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            padding: 8px;
+            display: inline-flex;
+            gap: 4px;
+            margin-top: 20px;
+        }
+
+        .toggle-btn {
+            padding: 12px 30px;
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 40px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .toggle-btn.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .price-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .price-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .price-card.featured {
+            border: 3px solid #667eea;
+            transform: scale(1.05);
+        }
+
+        .price-card.featured::before {
+            content: "MOST POPULAR";
+            position: absolute;
+            top: 20px;
+            right: -35px;
+            background: #667eea;
+            color: white;
+            padding: 8px 45px;
+            transform: rotate(45deg);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .plan-description {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+            min-height: 40px;
+        }
+
+        .price {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .price-small {
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        .billing-cycle {
+            color: #999;
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+        }
+
+        .features {
+            list-style: none;
+            margin: 30px 0;
+        }
+
+        .features li {
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .features li:last-child {
+            border-bottom: none;
+        }
+
+        .check {
+            color: #667eea;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .cta-button {
+            width: 100%;
+            padding: 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .cta-button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .cta-button.secondary {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+        }
+
+        .cta-button.secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .comparison-table {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-top: 60px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .comparison-table h2 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2rem;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .check-cell {
+            text-align: center;
+            color: #667eea;
+            font-size: 1.2rem;
+        }
+
+        .faq {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-top: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .faq h2 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2rem;
+            color: #333;
+        }
+
+        .faq-item {
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+        }
+
+        .faq-question {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .faq-answer {
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .calculator {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-top: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .calculator h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2rem;
+            color: #333;
+        }
+
+        .calc-input {
+            margin-bottom: 20px;
+        }
+
+        .calc-input label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .calc-input input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .calc-result {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 12px;
+            margin-top: 30px;
+        }
+
+        .calc-result h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .calc-result p {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .recommendation {
+            background: #667eea;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .price-card.featured {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Simple, Transparent Pricing</h1>
+            <p class="subtitle">
+                Choose the plan that fits your team. Start free, upgrade when you're ready.
+                All plans include our unique configurable answer detection modes.
+            </p>
+            <div class="toggle-container">
+                <button class="toggle-btn active" onclick="toggleBilling('monthly')">Monthly</button>
+                <button class="toggle-btn" onclick="toggleBilling('annual')">Annual <span style="background: rgba(255,255,255,0.3); padding: 2px 8px; border-radius: 12px; margin-left: 8px;">Save 16%</span></button>
+            </div>
+        </header>
+
+        <div class="pricing-grid">
+            <!-- Free Plan -->
+            <div class="price-card">
+                <div class="plan-name">Free</div>
+                <div class="plan-description">Perfect for testing and proof of concept</div>
+                <div class="price">$0</div>
+                <div class="billing-cycle">Forever free</div>
+
+                <ul class="features">
+                    <li><span class="check"></span> 50 questions/month</li>
+                    <li><span class="check"></span> 2 monitored channels</li>
+                    <li><span class="check"></span> 7-day data retention</li>
+                    <li><span class="check"></span> All 3 answer detection modes</li>
+                    <li><span class="check"></span> Basic statistics</li>
+                    <li><span class="check"></span> Email support (48hr)</li>
+                </ul>
+
+                <button class="cta-button secondary">Start Free</button>
+            </div>
+
+            <!-- Starter Plan -->
+            <div class="price-card">
+                <div class="plan-name">Starter</div>
+                <div class="plan-description">Great for small teams (3-25 people)</div>
+                <div class="price">$4<span class="price-small">/user</span></div>
+                <div class="billing-cycle" id="starter-billing">per month " minimum 3 users</div>
+
+                <ul class="features">
+                    <li><span class="check"></span> Unlimited questions</li>
+                    <li><span class="check"></span> 10 monitored channels</li>
+                    <li><span class="check"></span> 30-day data retention</li>
+                    <li><span class="check"></span> Web analytics dashboard</li>
+                    <li><span class="check"></span> Export data (CSV)</li>
+                    <li><span class="check"></span> Remove branding</li>
+                    <li><span class="check"></span> Slack support (24hr)</li>
+                </ul>
+
+                <button class="cta-button">Get Started</button>
+            </div>
+
+            <!-- Professional Plan (Featured) -->
+            <div class="price-card featured">
+                <div class="plan-name">Professional</div>
+                <div class="plan-description">Best value for growing teams (25+ people)</div>
+                <div class="price" id="pro-price">$149</div>
+                <div class="billing-cycle" id="pro-billing">per month " unlimited users</div>
+
+                <ul class="features">
+                    <li><span class="check"></span> 3,000 questions/month</li>
+                    <li><span class="check"></span> Unlimited channels</li>
+                    <li><span class="check"></span> 90-day data retention</li>
+                    <li><span class="check"></span> Custom escalation timings</li>
+                    <li><span class="check"></span> Advanced analytics</li>
+                    <li><span class="check"></span> API access</li>
+                    <li><span class="check"></span> Scheduled reports</li>
+                    <li><span class="check"></span> Integrations (Jira, Linear)</li>
+                    <li><span class="check"></span> Slack support (4hr)</li>
+                </ul>
+
+                <button class="cta-button">Start 14-Day Trial</button>
+            </div>
+
+            <!-- Business Plan -->
+            <div class="price-card">
+                <div class="plan-name">Business</div>
+                <div class="plan-description">For large teams needing multi-workspace</div>
+                <div class="price" id="business-price">$399</div>
+                <div class="billing-cycle" id="business-billing">per month " up to 5 workspaces</div>
+
+                <ul class="features">
+                    <li><span class="check"></span> 10,000 questions/month</li>
+                    <li><span class="check"></span> 1-year data retention</li>
+                    <li><span class="check"></span> Multi-workspace support</li>
+                    <li><span class="check"></span> Business hours awareness</li>
+                    <li><span class="check"></span> Priority support (1hr)</li>
+                    <li><span class="check"></span> Dedicated Slack channel</li>
+                    <li><span class="check"></span> Custom integrations</li>
+                    <li><span class="check"></span> 99.9% SLA</li>
+                    <li><span class="check"></span> Quarterly business review</li>
+                </ul>
+
+                <button class="cta-button">Contact Sales</button>
+            </div>
+
+            <!-- Enterprise Plan -->
+            <div class="price-card">
+                <div class="plan-name">Enterprise</div>
+                <div class="plan-description">Custom solutions for large organizations</div>
+                <div class="price">Custom</div>
+                <div class="billing-cycle">tailored to your needs</div>
+
+                <ul class="features">
+                    <li><span class="check"></span> Unlimited everything</li>
+                    <li><span class="check"></span> SSO/SAML authentication</li>
+                    <li><span class="check"></span> On-premise option</li>
+                    <li><span class="check"></span> White-label option</li>
+                    <li><span class="check"></span> Dedicated CSM</li>
+                    <li><span class="check"></span> Custom SLA (99.99%+)</li>
+                    <li><span class="check"></span> Professional services</li>
+                    <li><span class="check"></span> Custom contract terms</li>
+                    <li><span class="check"></span> Support (30min response)</li>
+                </ul>
+
+                <button class="cta-button">Contact Sales</button>
+            </div>
+        </div>
+
+        <!-- Pricing Calculator -->
+        <div class="calculator">
+            <h2>=° Find Your Perfect Plan</h2>
+            <div class="calc-input">
+                <label for="teamSize">How many people on your team?</label>
+                <input type="number" id="teamSize" value="10" min="1" max="1000" oninput="calculatePrice()">
+            </div>
+            <div class="calc-input">
+                <label for="questionCount">Approximately how many questions per month?</label>
+                <input type="number" id="questionCount" value="500" min="0" max="50000" oninput="calculatePrice()">
+            </div>
+            <div class="calc-result" id="calcResult">
+                <!-- Results will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="comparison-table">
+            <h2>Detailed Feature Comparison</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Free</th>
+                        <th>Starter</th>
+                        <th>Professional</th>
+                        <th>Business</th>
+                        <th>Enterprise</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Questions per month</td>
+                        <td>50</td>
+                        <td>Unlimited</td>
+                        <td>3,000</td>
+                        <td>10,000</td>
+                        <td>Unlimited</td>
+                    </tr>
+                    <tr>
+                        <td>Monitored channels</td>
+                        <td>2</td>
+                        <td>10</td>
+                        <td>Unlimited</td>
+                        <td>Unlimited</td>
+                        <td>Unlimited</td>
+                    </tr>
+                    <tr>
+                        <td>Data retention</td>
+                        <td>7 days</td>
+                        <td>30 days</td>
+                        <td>90 days</td>
+                        <td>1 year</td>
+                        <td>Unlimited</td>
+                    </tr>
+                    <tr>
+                        <td>Answer detection modes</td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                    </tr>
+                    <tr>
+                        <td>Question detection</td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                    </tr>
+                    <tr>
+                        <td>Two-tier escalation</td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                    </tr>
+                    <tr>
+                        <td>Web dashboard</td>
+                        <td></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                    </tr>
+                    <tr>
+                        <td>Advanced analytics</td>
+                        <td></td>
+                        <td></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                    </tr>
+                    <tr>
+                        <td>API access</td>
+                        <td></td>
+                        <td></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                    </tr>
+                    <tr>
+                        <td>Custom escalation timing</td>
+                        <td></td>
+                        <td></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                    </tr>
+                    <tr>
+                        <td>Business hours awareness</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                    </tr>
+                    <tr>
+                        <td>Multi-workspace</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td class="check-cell"></td>
+                        <td class="check-cell"></td>
+                    </tr>
+                    <tr>
+                        <td>SSO/SAML</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td class="check-cell"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- FAQ -->
+        <div class="faq">
+            <h2>Frequently Asked Questions</h2>
+
+            <div class="faq-item">
+                <div class="faq-question">How does per-user pricing work?</div>
+                <div class="faq-answer">
+                    We count active users each month - anyone who asked or answered a question.
+                    You're only charged for users who actually engage with the system. Minimum 3 users.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Can I switch between per-user and flat-rate?</div>
+                <div class="faq-answer">
+                    Yes! You can switch plans at any time. We'll prorate the difference and credit your account.
+                    Most teams start with per-user and upgrade to flat-rate as they grow past 30-40 users.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">What happens if I exceed my question limit?</div>
+                <div class="faq-answer">
+                    We'll notify you at 80% and 90% of your limit. After that, overage questions cost $0.10 each.
+                    Most customers find it more economical to upgrade to the next tier.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">What are the three answer detection modes?</div>
+                <div class="faq-answer">
+                    <strong>Emoji Only:</strong> Requires  emoji to mark as answered (strict tracking).<br>
+                    <strong>Thread Auto:</strong> Any reply automatically marks as answered (casual channels).<br>
+                    <strong>Hybrid:</strong> Replies stop escalation, but emoji needed for stats (best of both).
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Can I try before I buy?</div>
+                <div class="faq-answer">
+                    Absolutely! Start with the free tier (no credit card required). When you're ready to upgrade,
+                    Professional and Business plans come with a 14-day free trial.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">How do refunds work?</div>
+                <div class="faq-answer">
+                    We offer a 30-day money-back guarantee on all paid plans. If you're not satisfied,
+                    contact us within 30 days for a full refund, no questions asked.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Do you offer discounts for nonprofits or education?</div>
+                <div class="faq-answer">
+                    Yes! We offer 50% off for verified nonprofits and educational institutions.
+                    Contact sales@questionrouter.io with proof of status.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">What payment methods do you accept?</div>
+                <div class="faq-answer">
+                    We accept all major credit cards (Visa, Mastercard, Amex) via Stripe.
+                    Enterprise customers can pay by invoice (NET 30 terms available).
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleBilling(cycle) {
+            const buttons = document.querySelectorAll('.toggle-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (cycle === 'annual') {
+                // Show annual pricing
+                document.getElementById('pro-price').innerHTML = '$1,490<span class="price-small">/year</span>';
+                document.getElementById('pro-billing').textContent = 'billed annually " save $298';
+                document.getElementById('business-price').innerHTML = '$3,990<span class="price-small">/year</span>';
+                document.getElementById('business-billing').textContent = 'billed annually " save $798';
+                document.getElementById('starter-billing').textContent = 'per month " minimum 3 users " save 16% annually';
+            } else {
+                // Show monthly pricing
+                document.getElementById('pro-price').textContent = '$149';
+                document.getElementById('pro-billing').textContent = 'per month " unlimited users';
+                document.getElementById('business-price').textContent = '$399';
+                document.getElementById('business-billing').textContent = 'per month " up to 5 workspaces';
+                document.getElementById('starter-billing').textContent = 'per month " minimum 3 users';
+            }
+        }
+
+        function calculatePrice() {
+            const teamSize = parseInt(document.getElementById('teamSize').value) || 0;
+            const questionCount = parseInt(document.getElementById('questionCount').value) || 0;
+
+            const perUserPrice = teamSize * 4;
+            const proPrice = 149;
+            const businessPrice = 399;
+
+            let recommendation = '';
+            let details = '';
+
+            if (questionCount <= 50) {
+                recommendation = 'Free Plan';
+                details = `
+                    <h3>Recommended: Free Plan</h3>
+                    <p><strong>Cost:</strong> $0/month</p>
+                    <p><strong>Why:</strong> You're tracking ${questionCount} questions/month, which fits perfectly in our free tier (50 questions).</p>
+                    <p>Start free and see how the system works with your team!</p>
+                `;
+            } else if (teamSize <= 25) {
+                const savings = Math.max(0, proPrice - perUserPrice);
+                recommendation = 'Starter (Per-User)';
+                details = `
+                    <h3>Recommended: Starter Plan (Per-User)</h3>
+                    <p><strong>Cost:</strong> $${perUserPrice}/month (${teamSize} users × $4)</p>
+                    <p><strong>Why:</strong> With ${teamSize} users, per-user pricing saves you $${savings}/month vs Professional.</p>
+                    <p>You get unlimited questions and all core features.</p>
+                    <div class="recommendation">
+                        =¡ Tip: At 38+ users, Professional flat-rate ($149) becomes cheaper!
+                    </div>
+                `;
+            } else if (teamSize < 38 || questionCount <= 3000) {
+                const perUserCost = teamSize * 4;
+                const savings = Math.max(0, perUserCost - proPrice);
+                recommendation = 'Professional';
+                details = `
+                    <h3>Recommended: Professional Plan</h3>
+                    <p><strong>Cost:</strong> $149/month (unlimited users)</p>
+                    <p><strong>Why:</strong> With ${teamSize} users, flat-rate saves you $${savings}/month vs per-user pricing.</p>
+                    <p>You get advanced analytics, API access, and custom escalation timings.</p>
+                    ${questionCount > 3000 ? `
+                    <div class="recommendation">
+                          Note: You're tracking ${questionCount} questions/month.
+                        That's ${questionCount - 3000} over the Professional limit.
+                        Overages cost $${((questionCount - 3000) * 0.1).toFixed(2)}/month.
+                        Consider Business plan at $399/month for 10,000 questions included.
+                    </div>
+                    ` : ''}
+                `;
+            } else if (questionCount <= 10000) {
+                recommendation = 'Business';
+                details = `
+                    <h3>Recommended: Business Plan</h3>
+                    <p><strong>Cost:</strong> $399/month (up to 5 workspaces)</p>
+                    <p><strong>Why:</strong> With ${questionCount.toLocaleString()} questions/month, you need the higher limit.</p>
+                    <p>You also get multi-workspace support, business hours awareness, and priority support.</p>
+                `;
+            } else {
+                recommendation = 'Enterprise';
+                details = `
+                    <h3>Recommended: Enterprise Plan</h3>
+                    <p><strong>Cost:</strong> Custom pricing (starting ~$1,500/month)</p>
+                    <p><strong>Why:</strong> With ${teamSize} users and ${questionCount.toLocaleString()} questions/month,
+                    you need unlimited everything.</p>
+                    <p>You'll get SSO, dedicated support, custom SLA, and volume discounts.</p>
+                    <div class="recommendation">
+                        =¼ Contact sales for a custom quote based on your exact needs.
+                    </div>
+                `;
+            }
+
+            document.getElementById('calcResult').innerHTML = details;
+        }
+
+        // Initialize calculator on page load
+        calculatePrice();
+    </script>
+</body>
+</html>

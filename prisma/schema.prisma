@@ -16,11 +16,12 @@ model Workspace {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  channels      Channel[]
-  users         User[]
-  questions     Question[]
-  config        WorkspaceConfig?
-  dailyStats    DailyStat[]
+  channels          Channel[]
+  users             User[]
+  questions         Question[]
+  config            WorkspaceConfig?
+  dailyStats        DailyStat[]
+  escalationTargets EscalationTarget[]
 
   @@map("workspaces")
 }
@@ -53,11 +54,11 @@ model User {
   lastSeenAt    DateTime? @map("last_seen_at")
   createdAt     DateTime  @default(now()) @map("created_at")
 
-  workspace           Workspace       @relation(fields: [workspaceId], references: [id])
-  questionsAsked      Question[]      @relation("QuestionAsker")
-  questionsAnswered   Question[]      @relation("QuestionAnswerer")
+  workspace           Workspace         @relation(fields: [workspaceId], references: [id])
+  questionsAsked      Question[]        @relation("QuestionAsker")
+  questionsAnswered   Question[]        @relation("QuestionAnswerer")
   expertise           UserExpertise[]
-  finalEscalationFor  WorkspaceConfig?
+  finalEscalationFor  WorkspaceConfig[]
 
   @@unique([workspaceId, slackUserId])
   @@index([isActive, lastSeenAt])
@@ -82,11 +83,12 @@ model Question {
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
-  workspace    Workspace     @relation(fields: [workspaceId], references: [id])
-  channel      Channel       @relation(fields: [channelId], references: [id])
-  asker        User          @relation("QuestionAsker", fields: [askerId], references: [id])
-  answerer     User?         @relation("QuestionAnswerer", fields: [answererId], references: [id])
-  escalations  Escalation[]
+  workspace         Workspace          @relation(fields: [workspaceId], references: [id])
+  channel           Channel            @relation(fields: [channelId], references: [id])
+  asker             User               @relation("QuestionAsker", fields: [askerId], references: [id])
+  answerer          User?              @relation("QuestionAnswerer", fields: [answererId], references: [id])
+  escalations       Escalation[]
+  escalationEvents  EscalationEvent[]
 
   @@index([status, askedAt])
   @@index([status, escalationLevel])
@@ -120,14 +122,36 @@ model Escalation {
   actionTaken     String?  @map("action_taken")
   escalatedAt     DateTime @default(now()) @map("escalated_at")
 
-  question Question @relation(fields: [questionId], references: [id])
+  question Question          @relation(fields: [questionId], references: [id])
+  events   EscalationEvent[]
 
   @@map("escalations")
+}
+
+model EscalationEvent {
+  id              String   @id @default(uuid())
+  questionId      String   @map("question_id")
+  escalationId    String   @map("escalation_id")
+  targetType      String   @map("target_type")     // 'user', 'user_group', 'channel'
+  targetId        String   @map("target_id")
+  targetName      String?  @map("target_name")
+  status          String   @default("pending")     // 'success', 'failed', 'skipped'
+  errorMessage    String?  @map("error_message") @db.Text
+  notifiedAt      DateTime @default(now()) @map("notified_at")
+
+  question   Question   @relation(fields: [questionId], references: [id])
+  escalation Escalation @relation(fields: [escalationId], references: [id])
+
+  @@index([questionId])
+  @@index([escalationId])
+  @@index([questionId, status])
+  @@map("escalation_events")
 }
 
 model WorkspaceConfig {
   id                        String   @id @default(uuid())
   workspaceId               String   @unique @map("workspace_id")
+  answerDetectionMode       String   @default("emoji_only") @map("answer_detection_mode")
   firstEscalationMinutes    Int      @default(120) @map("first_escalation_minutes")
   secondEscalationMinutes   Int      @default(240) @map("second_escalation_minutes")
   finalEscalationMinutes    Int      @default(1440) @map("final_escalation_minutes")
@@ -135,6 +159,9 @@ model WorkspaceConfig {
   dmSuggestionsEnabled      Boolean  @default(true) @map("dm_suggestions_enabled")
   threadPostsEnabled        Boolean  @default(true) @map("thread_posts_enabled")
   finalEscalationUserId     String?  @map("final_escalation_user_id")
+  escalationUserGroup       String?  @map("escalation_user_group")
+  escalationChannelId       String?  @map("escalation_channel_id")
+  migratedToTargets         Boolean  @default(false) @map("migrated_to_targets")
   settings                  Json?
   createdAt                 DateTime @default(now()) @map("created_at")
   updatedAt                 DateTime @updatedAt @map("updated_at")
@@ -160,4 +187,24 @@ model DailyStat {
 
   @@unique([workspaceId, channelId, date])
   @@map("daily_stats")
+}
+
+model EscalationTarget {
+  id              String   @id @default(uuid())
+  workspaceId     String   @map("workspace_id")
+  targetType      String   @map("target_type")     // 'user', 'user_group', 'channel'
+  targetId        String   @map("target_id")       // Slack ID (user ID, group ID, or channel ID)
+  targetName      String?  @map("target_name")     // Display name for UI
+  escalationLevel Int      @map("escalation_level") // Which escalation level (1, 2, 3, etc.)
+  priority        Int      @default(0)              // Order within the same level (lower = higher priority)
+  isActive        Boolean  @default(true) @map("is_active")
+  settings        Json?                             // Additional settings (e.g., notification preferences)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@unique([workspaceId, targetType, targetId, escalationLevel])
+  @@index([workspaceId, escalationLevel, priority])
+  @@map("escalation_targets")
 }
