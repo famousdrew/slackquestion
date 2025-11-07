@@ -16,11 +16,12 @@ model Workspace {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  channels      Channel[]
-  users         User[]
-  questions     Question[]
-  config        WorkspaceConfig?
-  dailyStats    DailyStat[]
+  channels          Channel[]
+  users             User[]
+  questions         Question[]
+  config            WorkspaceConfig?
+  dailyStats        DailyStat[]
+  escalationTargets EscalationTarget[]
 
   @@map("workspaces")
 }
@@ -158,4 +159,24 @@ model DailyStat {
 
   @@unique([workspaceId, channelId, date])
   @@map("daily_stats")
+}
+
+model EscalationTarget {
+  id              String   @id @default(uuid())
+  workspaceId     String   @map("workspace_id")
+  targetType      String   @map("target_type")     // 'user', 'user_group', 'channel'
+  targetId        String   @map("target_id")       // Slack ID (user ID, group ID, or channel ID)
+  targetName      String?  @map("target_name")     // Display name for UI
+  escalationLevel Int      @map("escalation_level") // Which escalation level (1, 2, 3, etc.)
+  priority        Int      @default(0)              // Order within the same level (lower = higher priority)
+  isActive        Boolean  @default(true) @map("is_active")
+  settings        Json?                             // Additional settings (e.g., notification preferences)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@unique([workspaceId, targetType, targetId, escalationLevel])
+  @@index([workspaceId, escalationLevel, priority])
+  @@map("escalation_targets")
 }

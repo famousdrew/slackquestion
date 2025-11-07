@@ -1,11 +1,16 @@
 /**
  * Workspace-Aware Escalation Engine
  * Checks for unanswered questions every 30 seconds
- * Uses per-workspace configuration from database
+ * Uses per-workspace configuration from database with flexible escalation targets
  */
 import { App } from '@slack/bolt';
 import { prisma } from '../utils/db.js';
 import { getWorkspaceConfig } from './configService.js';
+import {
+  getTargetsForLevel,
+  migrateFromLegacyConfig,
+  type EscalationTargetData,
+} from './escalationTargetService.js';
 
 const CHECK_INTERVAL_MS = 30000; // Check every 30 seconds
 
@@ -46,32 +51,36 @@ async function checkForEscalations(app: App) {
 
     // Process each workspace separately with its own config
     for (const workspace of workspaces) {
-      const config = workspace.config ||  await getWorkspaceConfig(workspace.id);
+      const config = workspace.config || (await getWorkspaceConfig(workspace.id));
+
+      // Migrate legacy config to new system if needed
+      await migrateFromLegacyConfig(workspace.id);
 
       const firstEscalationMs = config.firstEscalationMinutes * 60000;
       const secondEscalationMs = config.secondEscalationMinutes * 60000;
+      const finalEscalationMs = config.finalEscalationMinutes * 60000;
+
+      // Build escalation time thresholds for each level
+      const escalationThresholds = [
+        { level: 0, time: now.getTime() - firstEscalationMs }, // Level 0 → Level 1
+        { level: 1, time: now.getTime() - secondEscalationMs }, // Level 1 → Level 2
+        { level: 2, time: now.getTime() - finalEscalationMs }, // Level 2 → Level 3
+      ];
 
       // Find questions for this workspace that need escalation
       const questions = await prisma.question.findMany({
         where: {
           workspaceId: workspace.id,
           status: 'unanswered',
-          OR: [
-            // First escalation: based on workspace config
-            {
-              escalationLevel: 0,
-              askedAt: {
-                lte: new Date(now.getTime() - firstEscalationMs),
-              },
+          escalationLevel: {
+            lt: 99, // Don't escalate questions that have been paused
+          },
+          OR: escalationThresholds.map((threshold) => ({
+            escalationLevel: threshold.level,
+            askedAt: {
+              lte: new Date(threshold.time),
             },
-            // Second escalation: based on workspace config
-            {
-              escalationLevel: 1,
-              askedAt: {
-                lte: new Date(now.getTime() - secondEscalationMs),
-              },
-            },
-          ],
+          })),
         },
         include: {
           channel: true,
@@ -115,12 +124,8 @@ async function checkForEscalations(app: App) {
           // For emoji_only mode, replies don't affect anything - continue to escalate
         }
 
-        // Escalate based on level
-        if (question.escalationLevel === 0) {
-          await performFirstEscalation(app, question, config);
-        } else if (question.escalationLevel === 1) {
-          await performSecondEscalation(app, question, config);
-        }
+        // Perform escalation based on current level
+        await performEscalation(app, question, workspace.id, config);
       }
     }
   } catch (error) {
@@ -156,42 +161,53 @@ async function checkForThreadReplies(
   }
 }
 
-async function performFirstEscalation(app: App, question: any, config: any) {
+/**
+ * Unified escalation function that handles all escalation levels
+ * Uses flexible escalation targets from database
+ */
+async function performEscalation(app: App, question: any, workspaceId: string, config: any) {
   try {
-    const channelId = question.channel.slackChannelId;
-    const messageTs = question.slackMessageId;
+    const currentLevel = question.escalationLevel;
+    const nextLevel = currentLevel + 1;
     const questionAge = Math.round((Date.now() - new Date(question.askedAt).getTime()) / 60000);
 
-    // Get user group from config or fallback
-    const userGroupId = config.escalationUserGroup || FALLBACK_USER_GROUP;
+    // Get targets for the next escalation level
+    let targets = await getTargetsForLevel(workspaceId, nextLevel);
 
-    if (!userGroupId) {
+    // Fall back to legacy config if no targets found
+    if (targets.length === 0) {
+      targets = await getLegacyTargets(config, nextLevel);
+    }
+
+    if (targets.length === 0) {
       console.log(
-        `⚠️  Skipping first escalation for question ${question.id}: No user group configured`
+        `⚠️  No escalation targets configured for level ${nextLevel}, skipping question ${question.id}`
       );
-      // Still increment escalation level so it can proceed to second escalation
+      // Still increment escalation level so it can proceed to next level
       await prisma.question.update({
         where: { id: question.id },
         data: {
-          escalationLevel: 1,
+          escalationLevel: nextLevel,
           lastEscalatedAt: new Date(),
         },
       });
       return;
     }
 
-    // Post in thread with user group mention
-    await app.client.chat.postMessage({
-      channel: channelId,
-      thread_ts: messageTs,
-      text: `⚠️ This question has been unanswered for ${questionAge} minutes.\n\n<!subteam^${userGroupId}> - Can someone help with this?`,
-    });
+    // Execute escalation for each target
+    const actionsTaken: string[] = [];
+    for (const target of targets) {
+      const action = await executeEscalationTarget(app, question, target, questionAge);
+      if (action) {
+        actionsTaken.push(action);
+      }
+    }
 
     // Update escalation level
     await prisma.question.update({
       where: { id: question.id },
       data: {
-        escalationLevel: 1,
+        escalationLevel: nextLevel,
         lastEscalatedAt: new Date(),
       },
     });
@@ -200,80 +216,128 @@ async function performFirstEscalation(app: App, question: any, config: any) {
     await prisma.escalation.create({
       data: {
         questionId: question.id,
-        escalationLevel: 1,
+        escalationLevel: nextLevel,
         suggestedUsers: [],
-        actionTaken: 'thread_post_with_group',
+        actionTaken: actionsTaken.join(', ') || 'escalated',
         escalatedAt: new Date(),
       },
     });
 
-    console.log(`⚠️  First escalation: Question ${question.id} (${questionAge} min old)`);
+    console.log(
+      `⚠️  Level ${nextLevel} escalation: Question ${question.id} (${questionAge} min old) - ${actionsTaken.length} action(s) taken`
+    );
   } catch (error) {
-    console.error('Error in first escalation:', error);
+    console.error(`Error in level ${question.escalationLevel + 1} escalation:`, error);
   }
 }
 
-async function performSecondEscalation(app: App, question: any, config: any) {
+/**
+ * Execute escalation for a specific target
+ */
+async function executeEscalationTarget(
+  app: App,
+  question: any,
+  target: EscalationTargetData,
+  questionAge: number
+): Promise<string | null> {
   try {
     const channelId = question.channel.slackChannelId;
     const channelName = question.channel.channelName || 'unknown channel';
     const messageTs = question.slackMessageId;
-    const questionAge = Math.round((Date.now() - new Date(question.askedAt).getTime()) / 60000);
     const askerName = question.asker.displayName || question.asker.realName || 'someone';
 
-    // Get escalation channel from config or fallback
-    const escalationChannelId = config.escalationChannelId || FALLBACK_CHANNEL;
+    switch (target.targetType) {
+      case 'user_group':
+        // Post in thread with user group mention
+        await app.client.chat.postMessage({
+          channel: channelId,
+          thread_ts: messageTs,
+          text: `⚠️ This question has been unanswered for ${questionAge} minutes.\n\n<!subteam^${target.targetId}> - Can someone help with this?`,
+        });
+        return `thread_post_group_${target.targetId}`;
 
-    if (!escalationChannelId) {
-      console.log(
-        `⚠️  Skipping second escalation for question ${question.id}: No escalation channel configured`
-      );
-      // Mark escalation level higher so it doesn't keep trying
-      await prisma.question.update({
-        where: { id: question.id },
-        data: {
-          escalationLevel: 2,
-          lastEscalatedAt: new Date(),
-        },
-      });
-      return;
+      case 'user':
+        // Post in thread and DM the user
+        await app.client.chat.postMessage({
+          channel: channelId,
+          thread_ts: messageTs,
+          text: `⚠️ This question has been unanswered for ${questionAge} minutes.\n\n<@${target.targetId}> - Can you help with this?`,
+        });
+
+        // Optionally send DM
+        try {
+          const workspaceInfo = await app.client.team.info();
+          const teamDomain = workspaceInfo.team?.domain || 'your-workspace';
+          const threadLink = `https://${teamDomain}.slack.com/archives/${channelId}/p${messageTs.replace('.', '')}`;
+
+          await app.client.chat.postMessage({
+            channel: target.targetId,
+            text: `🔔 You've been assigned to help with an unanswered question in #${channelName}:\n\n> ${question.messageText}\n\n<${threadLink}|View Thread →>`,
+          });
+        } catch (dmError) {
+          console.warn(`Could not send DM to user ${target.targetId}:`, dmError);
+        }
+        return `thread_post_user_${target.targetId}`;
+
+      case 'channel':
+        // Post to escalation channel
+        const workspaceInfo = await app.client.team.info();
+        const teamDomain = workspaceInfo.team?.domain || 'your-workspace';
+        const threadLink = `https://${teamDomain}.slack.com/archives/${channelId}/p${messageTs.replace('.', '')}`;
+
+        await app.client.chat.postMessage({
+          channel: target.targetId,
+          text: `🚨 *Unanswered Question Alert*\n\nQuestion from <@${question.asker.slackUserId}> in <#${channelId}> (${questionAge} minutes old):\n\n> ${question.messageText}\n\n<${threadLink}|View Thread →>`,
+          unfurl_links: false,
+          unfurl_media: false,
+        });
+        return `channel_post_${target.targetId}`;
+
+      default:
+        console.warn(`Unknown target type: ${target.targetType}`);
+        return null;
     }
-
-    // Build the thread link
-    const workspaceInfo = await app.client.team.info();
-    const teamDomain = workspaceInfo.team?.domain || 'your-workspace';
-    const threadLink = `https://${teamDomain}.slack.com/archives/${channelId}/p${messageTs.replace('.', '')}`;
-
-    // Post to escalation channel
-    await app.client.chat.postMessage({
-      channel: escalationChannelId,
-      text: `🚨 *Unanswered Question Alert*\n\nQuestion from @${askerName} in #${channelName} (${questionAge} minutes old):\n\n> ${question.messageText}\n\n<${threadLink}|View Thread →>`,
-      unfurl_links: false,
-      unfurl_media: false,
-    });
-
-    // Update escalation level
-    await prisma.question.update({
-      where: { id: question.id },
-      data: {
-        escalationLevel: 2,
-        lastEscalatedAt: new Date(),
-      },
-    });
-
-    // Log escalation
-    await prisma.escalation.create({
-      data: {
-        questionId: question.id,
-        escalationLevel: 2,
-        suggestedUsers: [],
-        actionTaken: 'channel_post',
-        escalatedAt: new Date(),
-      },
-    });
-
-    console.log(`🚨 Second escalation: Question ${question.id} posted to channel ${escalationChannelId}`);
   } catch (error) {
-    console.error('Error in second escalation:', error);
+    console.error(`Error executing escalation target ${target.targetId}:`, error);
+    return null;
   }
+}
+
+/**
+ * Get legacy targets from config for backward compatibility
+ */
+async function getLegacyTargets(config: any, level: number): Promise<EscalationTargetData[]> {
+  const targets: EscalationTargetData[] = [];
+
+  if (level === 1 && config.escalationUserGroup) {
+    targets.push({
+      targetType: 'user_group',
+      targetId: config.escalationUserGroup,
+      escalationLevel: 1,
+      priority: 0,
+      isActive: true,
+    });
+  }
+
+  if (level === 2 && config.escalationChannelId) {
+    targets.push({
+      targetType: 'channel',
+      targetId: config.escalationChannelId,
+      escalationLevel: 2,
+      priority: 0,
+      isActive: true,
+    });
+  }
+
+  if (level === 3 && config.finalEscalationUserId) {
+    targets.push({
+      targetType: 'user',
+      targetId: config.finalEscalationUserId,
+      escalationLevel: 3,
+      priority: 0,
+      isActive: true,
+    });
+  }
+
+  return targets;
 }

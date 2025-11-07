@@ -256,6 +256,18 @@ export function registerConfigCommand(app: App) {
                 },
               ],
             },
+            {
+              type: 'divider',
+            },
+            {
+              type: 'context',
+              elements: [
+                {
+                  type: 'mrkdwn',
+                  text: '🎯 *Advanced:* Use `/qr-targets` to configure multiple escalation targets (users, groups, channels) at each level.',
+                },
+              ],
+            },
           ],
         },
       });

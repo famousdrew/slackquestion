@@ -5,6 +5,7 @@ import { registerReactionHandler } from './events/reactionHandler.js';
 import { registerAppHomeHandler } from './events/appHome.js';
 import { registerStatsCommand } from './commands/statsCommand.js';
 import { registerConfigCommand } from './commands/configCommand.js';
+import { registerTargetsCommand } from './commands/targetsCommand.js';
 import { disconnectDb } from './utils/db.js';
 import { startEscalationEngine, stopEscalationEngine } from './services/escalationEngine.js';
 
@@ -38,6 +39,7 @@ registerAppHomeHandler(app);
 // Register commands
 registerStatsCommand(app);
 registerConfigCommand(app);
+registerTargetsCommand(app);
 
 // Test command
 app.command('/qr-test', async ({ command, ack, respond, client, logger }) => {
