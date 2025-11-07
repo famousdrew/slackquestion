@@ -2,21 +2,17 @@
 
 A Slack bot that automatically detects questions in channels, tracks them, and escalates unanswered questions to support teams. Built to ensure no question goes unanswered.
 
-## ⚠️ **IMPORTANT: Database Migration Required**
+## ⚠️ **Database Migrations**
 
-**If you're seeing this error:**
-```
-The column `workspace_config.migrated_to_targets` does not exist in the current database.
-```
+**For existing installations**, you may need to apply database migrations when upgrading.
 
-**You need to run a database migration immediately!**
+📝 **See [MIGRATIONS.md](./MIGRATIONS.md)** for complete migration guide including:
+- Initial database setup for new installations
+- Upgrade migrations for existing deployments
+- Latest: Email privacy migration (removes email column)
 
-📝 **Quick Fix:**
-1. Open [MIGRATIONS.md](./MIGRATIONS.md) for detailed instructions
-2. Run the SQL in `migration-add-migrated-to-targets.sql` on your database
-3. Restart your application
-
-This migration adds a single boolean column and takes < 1 second to apply.
+**Common migration needed:**
+If you see an error about missing `workspace_config.migrated_to_targets` column, run `migration-add-migrated-to-targets.sql` on your database.
 
 ---
 
