@@ -14,24 +14,25 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #e4e4e7;
+            background: #0a0a0a;
             padding: 20px;
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            background: #18181b;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
             overflow: hidden;
+            border: 1px solid #27272a;
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
             color: white;
-            padding: 40px 40px 30px;
+            padding: 40px 40px 20px;
             text-align: center;
         }
 
@@ -42,13 +43,63 @@
         }
 
         .header p {
-            font-size: 1.3em;
+            font-size: 1.2em;
             opacity: 0.95;
             font-weight: 300;
+            margin-bottom: 30px;
         }
 
-        .content {
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 0;
+            background: #09090b;
+            border-bottom: 2px solid #27272a;
+        }
+
+        .tab-nav input[type="radio"] {
+            display: none;
+        }
+
+        .tab-nav label {
+            flex: 1;
+            padding: 16px 20px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: #71717a;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            background: #18181b;
+        }
+
+        .tab-nav label:hover {
+            background: #27272a;
+            color: #a1a1aa;
+        }
+
+        #tab-user:checked ~ .tab-nav label[for="tab-user"],
+        #tab-admin:checked ~ .tab-nav label[for="tab-admin"] {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+            background: #18181b;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
             padding: 40px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        #tab-user:checked ~ .content-wrapper #user-content,
+        #tab-admin:checked ~ .content-wrapper #admin-content {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .section {
@@ -65,7 +116,7 @@
             gap: 12px;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 3px solid #667eea;
+            border-bottom: 2px solid #3b82f6;
         }
 
         .section-icon {
@@ -74,25 +125,30 @@
 
         .section-title {
             font-size: 1.8em;
-            color: #667eea;
+            color: #3b82f6;
             font-weight: 600;
         }
 
         h3 {
-            color: #764ba2;
+            color: #8b5cf6;
             margin: 25px 0 15px;
             font-size: 1.3em;
         }
 
         h4 {
-            color: #555;
+            color: #a1a1aa;
             margin: 20px 0 10px;
             font-size: 1.1em;
         }
 
-        p, li {
-            margin-bottom: 10px;
-            color: #555;
+        p {
+            margin-bottom: 15px;
+            color: #d4d4d8;
+        }
+
+        li {
+            margin-bottom: 8px;
+            color: #d4d4d8;
         }
 
         ul {
@@ -117,26 +173,31 @@
         }
 
         code {
-            background: #f5f5f5;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            color: #667eea;
+            background: #27272a;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            color: #60a5fa;
             font-size: 0.9em;
+            border: 1px solid #3f3f46;
+        }
+
+        strong {
+            color: #fafafa;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background: #09090b;
             border-radius: 8px;
             overflow: hidden;
+            border: 1px solid #27272a;
         }
 
         th {
-            background: #667eea;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
             color: white;
             padding: 15px;
             text-align: left;
@@ -145,7 +206,7 @@
 
         td {
             padding: 12px 15px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #27272a;
         }
 
         tr:last-child td {
@@ -153,45 +214,77 @@
         }
 
         tr:hover {
-            background: #f9f9f9;
+            background: #27272a;
         }
 
         .highlight-box {
-            background: #f0f4ff;
-            border-left: 4px solid #667eea;
+            background: #1e293b;
+            border-left: 4px solid #3b82f6;
             padding: 15px 20px;
             margin: 15px 0;
-            border-radius: 4px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+        }
+
+        .highlight-box strong {
+            color: #60a5fa;
         }
 
         .pro-tip {
-            background: #fff9e6;
-            border-left: 4px solid #ffc107;
+            background: #1e1b1a;
+            border-left: 4px solid #f59e0b;
             padding: 15px 20px;
             margin: 15px 0;
-            border-radius: 4px;
+            border-radius: 6px;
+            border: 1px solid #44403c;
+        }
+
+        .pro-tip h4 {
+            color: #fbbf24;
+            margin-top: 0;
         }
 
         .qa-item {
             margin-bottom: 20px;
+            padding: 15px;
+            background: #09090b;
+            border-radius: 8px;
+            border: 1px solid #27272a;
         }
 
         .qa-question {
             font-weight: 600;
-            color: #667eea;
-            margin-bottom: 5px;
+            color: #60a5fa;
+            margin-bottom: 8px;
+            font-size: 1.05em;
         }
 
         .qa-answer {
-            color: #555;
+            color: #d4d4d8;
             padding-left: 20px;
         }
 
+        .qa-answer ul {
+            margin-top: 8px;
+        }
+
+        .shared-section {
+            display: block;
+            padding: 0 40px 40px;
+            border-top: 2px solid #27272a;
+            padding-top: 40px;
+            margin-top: -10px;
+        }
+
         .footer {
-            background: #f8f9fa;
+            background: #09090b;
             padding: 30px 40px;
             text-align: center;
-            border-top: 2px solid #eee;
+            border-top: 2px solid #27272a;
+        }
+
+        .footer p {
+            color: #71717a;
         }
 
         .footer-badges {
@@ -203,7 +296,7 @@
         }
 
         .badge {
-            background: #667eea;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
             color: white;
             padding: 8px 16px;
             border-radius: 20px;
@@ -214,23 +307,35 @@
         @media print {
             body {
                 background: white;
+                color: #000;
                 padding: 0;
             }
 
             .container {
                 box-shadow: none;
                 border-radius: 0;
+                background: white;
             }
 
-            .header {
-                background: #667eea;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+            .tab-nav {
+                display: none;
+            }
+
+            .tab-content {
+                display: block !important;
+            }
+
+            .shared-section {
+                page-break-before: auto;
             }
         }
 
         @media (max-width: 768px) {
-            .content {
+            body {
+                padding: 10px;
+            }
+
+            .tab-content, .shared-section {
                 padding: 20px;
             }
 
@@ -245,144 +350,234 @@
             .section-title {
                 font-size: 1.5em;
             }
+
+            .tab-nav label {
+                padding: 12px 10px;
+                font-size: 0.9em;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Slack Question Router</h1>
+            <h1>⚡ Slack Question Router</h1>
             <p>Quick Start Guide</p>
         </div>
 
-        <div class="content">
-            <!-- End Users Section -->
-            <div class="section">
-                <div class="section-header">
-                    <span class="section-icon">🙋</span>
-                    <h2 class="section-title">For Team Members (End Users)</h2>
+        <!-- Hidden radio buttons for tab control -->
+        <input type="radio" id="tab-user" name="tab-control" checked>
+        <input type="radio" id="tab-admin" name="tab-control">
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <label for="tab-user">🙋 User Guide</label>
+            <label for="tab-admin">⚙️ Admin Guide</label>
+        </div>
+
+        <!-- Tab Content Wrapper -->
+        <div class="content-wrapper">
+            <!-- USER TAB -->
+            <div id="user-content" class="tab-content">
+                <div class="section">
+                    <div class="section-header">
+                        <span class="section-icon">❓</span>
+                        <h2 class="section-title">Asking Questions</h2>
+                    </div>
+
+                    <p><strong>Just ask!</strong> The bot automatically detects questions in monitored channels.</p>
+                    <ul>
+                        <li>Use <code>?</code> to ask questions: "How do I reset a password?"</li>
+                        <li>Bot adds ❓ emoji when your question is tracked</li>
+                        <li>No special commands needed</li>
+                    </ul>
                 </div>
 
-                <h3>Asking Questions</h3>
-                <p><strong>Just ask!</strong> The bot automatically detects questions in monitored channels.</p>
-                <ul>
-                    <li>Use <code>?</code> to ask questions: "How do I reset a password?"</li>
-                    <li>Bot adds ❓ emoji when your question is tracked</li>
-                    <li>No special commands needed</li>
-                </ul>
+                <div class="section">
+                    <div class="section-header">
+                        <span class="section-icon">✅</span>
+                        <h2 class="section-title">Marking Answers (Stack Overflow Style)</h2>
+                    </div>
 
-                <h3>Marking Answers (Stack Overflow Style)</h3>
-                <p><strong>You control who gets credit!</strong> As the question asker, mark helpful replies:</p>
-                <ol>
-                    <li>Someone replies to your question in the thread</li>
-                    <li>Add one of these emojis to their helpful reply:
-                        <ul class="emoji-list">
-                            <li>✅ <code>:white_check_mark:</code></li>
-                            <li>✔️ <code>:heavy_check_mark:</code></li>
-                            <li>☑️ <code>:ballot_box_with_check:</code></li>
-                            <li>🎯 <code>:dart:</code></li>
-                            <li>🙏 <code>:pray:</code></li>
+                    <p><strong>You control who gets credit!</strong> As the question asker, mark helpful replies:</p>
+                    <ol>
+                        <li>Someone replies to your question in the thread</li>
+                        <li>Add one of these emojis to their helpful reply:
+                            <ul class="emoji-list">
+                                <li>✅ <code>:white_check_mark:</code></li>
+                                <li>✔️ <code>:heavy_check_mark:</code></li>
+                                <li>☑️ <code>:ballot_box_with_check:</code></li>
+                                <li>🎯 <code>:dart:</code></li>
+                                <li>🙏 <code>:pray:</code></li>
+                            </ul>
+                        </li>
+                        <li>The reply author gets credit for helping!</li>
+                    </ol>
+
+                    <div class="highlight-box">
+                        <strong>Note:</strong> Only the question asker can mark thread replies. Anyone can still mark the original question.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span class="section-icon">🚨</span>
+                        <h2 class="section-title">What Happens If No One Answers?</h2>
+                    </div>
+
+                    <p>The bot automatically escalates unanswered questions:</p>
+                    <ul>
+                        <li><strong>Level 1:</strong> Support team gets tagged in your thread</li>
+                        <li><strong>Level 2:</strong> Alert posted to escalation channel</li>
+                        <li><strong>Level 3:</strong> Manager notified (if configured)</li>
+                    </ul>
+                    <p><em>Timing varies by workspace - ask your admin!</em></p>
+
+                    <h3>Stop Escalation</h3>
+                    <ul>
+                        <li>Mark the question as answered (any supported emoji)</li>
+                        <li>Or add 🔕 <code>:no_bell:</code> to snooze for 1 hour</li>
+                        <li>Or add 🚫 <code>:no_entry:</code> to dismiss as not a real question</li>
+                    </ul>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span class="section-icon">💡</span>
+                        <h2 class="section-title">Pro Tips</h2>
+                    </div>
+
+                    <div class="pro-tip">
+                        <ul>
+                            <li><strong>Zendesk Integration:</strong> Side conversations are automatically tracked</li>
+                            <li><strong>Privacy First:</strong> No email collection, only public Slack data</li>
+                            <li><strong>Thread Replies:</strong> Keep discussions organized - reply in threads!</li>
+                            <li><strong>Mark the Best Answer:</strong> Help others by marking the most helpful reply</li>
                         </ul>
-                    </li>
-                    <li>The reply author gets credit for helping!</li>
-                </ol>
-
-                <div class="highlight-box">
-                    <strong>Note:</strong> Only the question asker can mark thread replies. Anyone can still mark the original question.
+                    </div>
                 </div>
-
-                <h3>What Happens If No One Answers?</h3>
-                <p>The bot automatically escalates unanswered questions:</p>
-                <ul>
-                    <li><strong>Level 1:</strong> Support team gets tagged in your thread</li>
-                    <li><strong>Level 2:</strong> Alert posted to escalation channel</li>
-                    <li><strong>Level 3:</strong> Manager notified (if configured)</li>
-                </ul>
-                <p><em>Timing varies by workspace - ask your admin!</em></p>
             </div>
 
-            <!-- Admins Section -->
-            <div class="section">
-                <div class="section-header">
-                    <span class="section-icon">⚙️</span>
-                    <h2 class="section-title">For Workspace Admins</h2>
+            <!-- ADMIN TAB -->
+            <div id="admin-content" class="tab-content">
+                <div class="section">
+                    <div class="section-header">
+                        <span class="section-icon">🚀</span>
+                        <h2 class="section-title">Initial Setup</h2>
+                    </div>
+
+                    <ol>
+                        <li><strong>Monitor Channels</strong> - Use <code>/qr-config</code> to enable/disable tracking per channel</li>
+                        <li><strong>Set Escalation Timing</strong> - Configure how long before escalating (default: 2 hours → 4 hours → 24 hours)</li>
+                        <li><strong>Configure Escalation Targets</strong> - Use <code>/qr-targets</code> to set who gets notified at each level</li>
+                    </ol>
                 </div>
 
-                <h3>Initial Setup</h3>
-                <ol>
-                    <li><strong>Monitor Channels</strong> - Use <code>/qr-config</code> to enable/disable tracking per channel</li>
-                    <li><strong>Set Escalation Timing</strong> - Configure how long before escalating (default: 2 hours → 4 hours → 24 hours)</li>
-                    <li><strong>Configure Escalation Targets</strong> - Use <code>/qr-targets</code> to set who gets notified at each level</li>
-                </ol>
+                <div class="section">
+                    <div class="section-header">
+                        <span class="section-icon">⌨️</span>
+                        <h2 class="section-title">Key Admin Commands</h2>
+                    </div>
 
-                <h3>Key Admin Commands</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Command</th>
-                            <th>What It Does</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><code>/qr-config</code></td>
-                            <td>View/update workspace settings</td>
-                        </tr>
-                        <tr>
-                            <td><code>/qr-targets</code></td>
-                            <td>Manage escalation routing</td>
-                        </tr>
-                        <tr>
-                            <td><code>/qr-stats</code></td>
-                            <td>View answer rates and top responders</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <h3>Configuration Options</h3>
-                <h4>Answer Detection Modes:</h4>
-                <ul>
-                    <li><strong>Emoji Only:</strong> Requires ✅ to mark answered</li>
-                    <li><strong>Hybrid:</strong> Thread replies pause escalation, ✅ completes (recommended)</li>
-                    <li><strong>Thread Auto:</strong> Any reply marks as answered</li>
-                </ul>
-
-                <h4>Escalation Levels:</h4>
-                <ul>
-                    <li><strong>Level 1:</strong> Tag user group in thread (e.g., <code>@tier2</code>)</li>
-                    <li><strong>Level 2:</strong> Post to private channel (e.g., <code>#tier_1</code>)</li>
-                    <li><strong>Level 3:</strong> Notify specific user (optional)</li>
-                </ul>
-            </div>
-
-            <!-- Pro Tips -->
-            <div class="section">
-                <div class="section-header">
-                    <span class="section-icon">💡</span>
-                    <h2 class="section-title">Pro Tips</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Command</th>
+                                <th>What It Does</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>/qr-config</code></td>
+                                <td>View/update workspace settings</td>
+                            </tr>
+                            <tr>
+                                <td><code>/qr-targets</code></td>
+                                <td>Manage escalation routing</td>
+                            </tr>
+                            <tr>
+                                <td><code>/qr-stats</code></td>
+                                <td>View answer rates and top responders</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <div class="pro-tip">
-                    <h4>For Everyone</h4>
+                <div class="section">
+                    <div class="section-header">
+                        <span class="section-icon">⚙️</span>
+                        <h2 class="section-title">Configuration Options</h2>
+                    </div>
+
+                    <h3>Answer Detection Modes:</h3>
                     <ul>
-                        <li><strong>Zendesk Integration:</strong> Side conversations are automatically tracked</li>
-                        <li><strong>Privacy First:</strong> No email collection, only public Slack data</li>
-                        <li><strong>Thread Replies:</strong> Keep discussions organized - reply in threads!</li>
+                        <li><strong>Emoji Only:</strong> Requires ✅ to mark answered</li>
+                        <li><strong>Hybrid:</strong> Thread replies pause escalation, ✅ completes (recommended)</li>
+                        <li><strong>Thread Auto:</strong> Any reply marks as answered</li>
+                    </ul>
+
+                    <h3>Escalation Levels:</h3>
+                    <ul>
+                        <li><strong>Level 1:</strong> Tag user group in thread (e.g., <code>@tier2</code>)</li>
+                        <li><strong>Level 2:</strong> Post to private channel (e.g., <code>#tier_1</code>)</li>
+                        <li><strong>Level 3:</strong> Notify specific user (optional)</li>
+                    </ul>
+
+                    <h3>Channel-Specific Settings:</h3>
+                    <p>Different channels can have different rules:</p>
+                    <ul>
+                        <li><strong>Timing:</strong> Faster escalation for urgent channels</li>
+                        <li><strong>Detection Mode:</strong> Strict vs. relaxed answer detection</li>
+                        <li><strong>Escalation:</strong> Enable/disable per channel</li>
+                    </ul>
+                    <p>Use <code>/qr-config</code> and select a specific channel to customize.</p>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span class="section-icon">📊</span>
+                        <h2 class="section-title">Understanding Your Stats</h2>
+                    </div>
+
+                    <p>Run <code>/qr-stats</code> to see:</p>
+                    <ul>
+                        <li><strong>Total Questions:</strong> How many questions this week</li>
+                        <li><strong>Answer Rate:</strong> % of questions that got answers</li>
+                        <li><strong>Avg Response Time:</strong> How quickly questions are answered</li>
+                        <li><strong>Top Responders:</strong> Who's helping the most</li>
+                        <li><strong>Channel Breakdown:</strong> Which channels need the most help</li>
+                    </ul>
+
+                    <p><strong>Use this data to:</strong></p>
+                    <ul>
+                        <li>Recognize helpful team members</li>
+                        <li>Identify knowledge gaps</li>
+                        <li>Optimize escalation timing</li>
+                        <li>Improve documentation</li>
                     </ul>
                 </div>
 
-                <div class="pro-tip">
-                    <h4>For Admins</h4>
-                    <ul>
-                        <li><strong>Monitor Stats:</strong> Check <code>/qr-stats</code> weekly to identify knowledge gaps</li>
-                        <li><strong>Adjust Timing:</strong> Start aggressive (2 min), relax as team learns</li>
-                        <li><strong>Test Targets:</strong> Use <code>/qr-targets</code> to verify escalation routes work</li>
-                        <li><strong>Answer Mode:</strong> <code>hybrid</code> works best for most teams</li>
-                    </ul>
+                <div class="section">
+                    <div class="section-header">
+                        <span class="section-icon">💡</span>
+                        <h2 class="section-title">Pro Tips for Admins</h2>
+                    </div>
+
+                    <div class="pro-tip">
+                        <ul>
+                            <li><strong>Monitor Stats:</strong> Check <code>/qr-stats</code> weekly to identify knowledge gaps</li>
+                            <li><strong>Adjust Timing:</strong> Start aggressive (2 min), relax as team learns</li>
+                            <li><strong>Test Targets:</strong> Use <code>/qr-targets</code> to verify escalation routes work</li>
+                            <li><strong>Answer Mode:</strong> <code>hybrid</code> works best for most teams</li>
+                            <li><strong>Channel Strategy:</strong> Set faster escalations for customer-facing channels</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Common Questions -->
+        <!-- SHARED SECTIONS (visible on both tabs) -->
+        <div class="shared-section">
             <div class="section">
                 <div class="section-header">
                     <span class="section-icon">🆘</span>
@@ -421,31 +616,17 @@
                         </ul>
                     </div>
                 </div>
-            </div>
 
-            <!-- Stats Section -->
-            <div class="section">
-                <div class="section-header">
-                    <span class="section-icon">📊</span>
-                    <h2 class="section-title">Understanding Your Stats</h2>
+                <div class="qa-item">
+                    <div class="qa-question">Q: Can I exclude certain users or bots?</div>
+                    <div class="qa-answer">
+                        <ul>
+                            <li>Contact your workspace admin</li>
+                            <li>Bot messages from Zendesk are handled specially</li>
+                            <li>Other exclusions require configuration</li>
+                        </ul>
+                    </div>
                 </div>
-
-                <p>Run <code>/qr-stats</code> to see:</p>
-                <ul>
-                    <li><strong>Total Questions:</strong> How many questions this week</li>
-                    <li><strong>Answer Rate:</strong> % of questions that got answers</li>
-                    <li><strong>Avg Response Time:</strong> How quickly questions are answered</li>
-                    <li><strong>Top Responders:</strong> Who's helping the most</li>
-                    <li><strong>Channel Breakdown:</strong> Which channels need the most help</li>
-                </ul>
-
-                <p><strong>Use this data to:</strong></p>
-                <ul>
-                    <li>Recognize helpful team members</li>
-                    <li>Identify knowledge gaps</li>
-                    <li>Optimize escalation timing</li>
-                    <li>Improve documentation</li>
-                </ul>
             </div>
         </div>
 
