@@ -688,6 +688,19 @@ For questions or issues:
 
 ## Recent Updates
 
+### November 10, 2024 - Improved Question Detection ✅
+
+**Question Detection Enhancement:**
+- Fixed detection of questions with `?` in the middle of messages
+- Previously: Only detected questions ending with `?`
+- Now: Detects questions containing `?` anywhere in the text
+- **Examples now caught:**
+  - "Is that the citadel app name? Afterward the date..." ✅
+  - "Would Job Tracking work? I've sent over articles..." ✅
+- **Testing utilities added:**
+  - `test-question-detection.js` - Test detection patterns
+  - `check-work-questions.js` - Query database for channel questions
+
 ### November 7, 2024 - Build Fixes & Database Migration ✅
 
 **TypeScript Build Errors Fixed:**
