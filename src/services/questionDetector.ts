@@ -38,8 +38,8 @@ export function isQuestion(text: string, config = defaultConfig): boolean {
   // Too short
   if (normalized.length < config.minLength) return false;
 
-  // Check for question mark
-  if (config.questionMarks && normalized.endsWith('?')) return true;
+  // Check for question mark anywhere in the text
+  if (config.questionMarks && normalized.includes('?')) return true;
 
   // Check for question word starters
   for (const word of config.questionWords) {
