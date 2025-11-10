@@ -387,10 +387,15 @@
 
                     <p><strong>Just ask!</strong> The bot automatically detects questions in monitored channels.</p>
                     <ul>
-                        <li>Use <code>?</code> to ask questions: "How do I reset a password?"</li>
+                        <li>Include a <code>?</code> question mark anywhere in your message</li>
+                        <li>Questions can be multi-part: "Is this right? Let me know if..."</li>
                         <li>Bot adds ❓ emoji when your question is tracked</li>
-                        <li>No special commands needed</li>
+                        <li>No special commands or tags needed</li>
                     </ul>
+
+                    <div class="highlight-box">
+                        <strong>Recent Improvement:</strong> The bot now detects questions with ? anywhere in the message, not just at the end. This catches multi-part questions better!
+                    </div>
                 </div>
 
                 <div class="section">
@@ -425,13 +430,13 @@
                         <h2 class="section-title">What Happens If No One Answers?</h2>
                     </div>
 
-                    <p>The bot automatically escalates unanswered questions:</p>
+                    <p>The bot automatically escalates unanswered questions (default timing):</p>
                     <ul>
-                        <li><strong>Level 1:</strong> Support team gets tagged in your thread</li>
-                        <li><strong>Level 2:</strong> Alert posted to escalation channel</li>
-                        <li><strong>Level 3:</strong> Manager notified (if configured)</li>
+                        <li><strong>Level 1 (2 minutes):</strong> Support team gets tagged in your thread</li>
+                        <li><strong>Level 2 (4 minutes):</strong> Alert posted to escalation channel</li>
+                        <li><strong>Level 3 (24 hours):</strong> Manager notified (if configured)</li>
                     </ul>
-                    <p><em>Timing varies by workspace - ask your admin!</em></p>
+                    <p><em>Your workspace may have custom timing - check with your admin!</em></p>
 
                     <h3>Stop Escalation</h3>
                     <ul>
@@ -468,9 +473,14 @@
 
                     <ol>
                         <li><strong>Monitor Channels</strong> - Use <code>/qr-config</code> to enable/disable tracking per channel</li>
-                        <li><strong>Set Escalation Timing</strong> - Configure how long before escalating (default: 2 hours → 4 hours → 24 hours)</li>
+                        <li><strong>Set Escalation Timing</strong> - Configure how long before escalating (default: 2 min → 4 min → 24 hours)</li>
                         <li><strong>Configure Escalation Targets</strong> - Use <code>/qr-targets</code> to set who gets notified at each level</li>
+                        <li><strong>Choose Answer Mode</strong> - Set how questions are marked as answered (emoji_only, hybrid, or thread_auto)</li>
                     </ol>
+
+                    <div class="highlight-box">
+                        <strong>Quick Setup:</strong> Most teams start with 2-minute escalation timing and "hybrid" answer mode. Adjust based on your team's response patterns.
+                    </div>
                 </div>
 
                 <div class="section">
@@ -498,6 +508,14 @@
                             <tr>
                                 <td><code>/qr-stats</code></td>
                                 <td>View answer rates and top responders</td>
+                            </tr>
+                            <tr>
+                                <td><code>/qr-channel-config</code></td>
+                                <td>Configure channel-specific settings</td>
+                            </tr>
+                            <tr>
+                                <td><code>/qr-test</code></td>
+                                <td>Verify bot is running and check user groups</td>
                             </tr>
                         </tbody>
                     </table>
@@ -566,10 +584,11 @@
                     <div class="pro-tip">
                         <ul>
                             <li><strong>Monitor Stats:</strong> Check <code>/qr-stats</code> weekly to identify knowledge gaps</li>
-                            <li><strong>Adjust Timing:</strong> Start aggressive (2 min), relax as team learns</li>
-                            <li><strong>Test Targets:</strong> Use <code>/qr-targets</code> to verify escalation routes work</li>
-                            <li><strong>Answer Mode:</strong> <code>hybrid</code> works best for most teams</li>
-                            <li><strong>Channel Strategy:</strong> Set faster escalations for customer-facing channels</li>
+                            <li><strong>Adjust Timing:</strong> Start with 2-minute escalation, adjust based on response patterns</li>
+                            <li><strong>Test Targets:</strong> Use <code>/qr-test-escalation</code> to verify escalation routes work</li>
+                            <li><strong>Answer Mode:</strong> <code>hybrid</code> works best for most teams (replies stop escalation, ✅ for stats)</li>
+                            <li><strong>Channel Strategy:</strong> Set faster escalations for customer-facing channels using <code>/qr-channel-config</code></li>
+                            <li><strong>Database Logs:</strong> Use Railway logs to debug question detection issues</li>
                         </ul>
                     </div>
                 </div>
@@ -589,8 +608,10 @@
                     <div class="qa-answer">
                         <ul>
                             <li>Check that the channel is monitored (<code>/qr-config</code>)</li>
-                            <li>Ensure your message has a <code>?</code> question mark</li>
-                            <li>Questions in threads aren't tracked (only parent messages)</li>
+                            <li>Ensure your message has a <code>?</code> question mark (can be anywhere in the message)</li>
+                            <li>Messages in threads aren't tracked as new questions (only parent messages)</li>
+                            <li>Message must be at least 10 characters long</li>
+                            <li>Verify the bot is invited to the channel (<code>/invite @Question Router</code>)</li>
                         </ul>
                     </div>
                 </div>
@@ -631,12 +652,12 @@
         </div>
 
         <div class="footer">
-            <p><strong>Version 1.0</strong> | January 2025</p>
+            <p><strong>Version 1.1</strong> | November 2024</p>
             <div class="footer-badges">
                 <span class="badge">🔒 No Email Collection</span>
                 <span class="badge">🛡️ No PII Storage</span>
                 <span class="badge">🏠 Self-Hostable</span>
-                <span class="badge">🌟 Open Source</span>
+                <span class="badge">⚡ Improved Detection</span>
             </div>
         </div>
     </div>
