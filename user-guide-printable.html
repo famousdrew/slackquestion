@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Slack Question Router - User Guide</title>
+    <style>
+        /* Print-friendly styles */
+        @media print {
+            body { margin: 0; padding: 20px; }
+            h1, h2 { page-break-after: avoid; }
+            .page-break { page-break-before: always; }
+            a { color: #000; text-decoration: none; }
+            code { background: #f4f4f4; padding: 2px 6px; border: 1px solid #ddd; }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            color: #2d3748;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #4a5568;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+
+        h3 {
+            color: #2d3748;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        code {
+            background: #f7fafc;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #667eea;
+        }
+
+        .info-box {
+            background: #ebf8ff;
+            border-left: 4px solid #4299e1;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .warning-box {
+            background: #fffaf0;
+            border-left: 4px solid #f6ad55;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+        }
+
+        .footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+            text-align: center;
+            color: #718096;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <h1>📖 Slack Question Router - User Guide</h1>
+
+    <div class="info-box">
+        <strong>What is Question Router?</strong><br>
+        Question Router is a Slack bot that automatically detects questions in your channels, tracks them, and ensures they get answered through intelligent escalation.
+    </div>
+
+    <h2>🚀 Getting Started</h2>
+
+    <h3>How Questions Are Detected</h3>
+    <p>The bot automatically identifies questions by looking for:</p>
+    <ul>
+        <li>Messages ending with a question mark (?)</li>
+        <li>Messages starting with question words (How, What, When, Where, Why, Who)</li>
+        <li>Common help patterns ("Does anyone know...", "Can someone help...")</li>
+    </ul>
+
+    <div class="info-box">
+        <strong>💡 Tip:</strong> Make sure your question is clear and specific. The bot works best with well-formed questions.
+    </div>
+
+    <h3>What Happens When You Ask a Question</h3>
+    <ol>
+        <li><strong>Detection:</strong> Bot detects your question and starts tracking it</li>
+        <li><strong>Waiting Period:</strong> Grace period allows someone to answer naturally</li>
+        <li><strong>First Escalation:</strong> If unanswered, support team is notified in the thread</li>
+        <li><strong>Second Escalation:</strong> If still unanswered, question posted to escalation channel</li>
+        <li><strong>Resolution:</strong> Once answered, escalation stops automatically</li>
+    </ol>
+
+    <h2>✅ Marking Questions as Answered</h2>
+
+    <p>There are three answer detection modes (configured by your workspace admin):</p>
+
+    <table>
+        <tr>
+            <th>Mode</th>
+            <th>How It Works</th>
+            <th>When to Use</th>
+        </tr>
+        <tr>
+            <td><strong>emoji_only</strong></td>
+            <td>Add ✅ or ✔️ emoji reaction to mark answered</td>
+            <td>When you need precise control and want to confirm resolution</td>
+        </tr>
+        <tr>
+            <td><strong>thread_auto</strong></td>
+            <td>Any reply in thread marks as answered automatically</td>
+            <td>For casual channels where any response is sufficient</td>
+        </tr>
+        <tr>
+            <td><strong>hybrid</strong></td>
+            <td>Replies pause escalation, but ✅ emoji needed to fully resolve</td>
+            <td>Best balance - stops spam but tracks completion</td>
+        </tr>
+    </table>
+
+    <div class="warning-box">
+        <strong>⚠️ Important:</strong> Check with your admin to see which mode your workspace uses!
+    </div>
+
+    <h2>📊 Viewing Statistics</h2>
+
+    <p>Use <code>/qr-stats</code> to see question metrics:</p>
+    <ul>
+        <li>Total questions asked</li>
+        <li>Number answered vs. unanswered</li>
+        <li>Average response time</li>
+        <li>Current escalation settings</li>
+    </ul>
+
+    <h2>🔧 Basic Commands</h2>
+
+    <table>
+        <tr>
+            <th>Command</th>
+            <th>What It Does</th>
+        </tr>
+        <tr>
+            <td><code>/qr-test</code></td>
+            <td>Test if the bot is running and see user groups</td>
+        </tr>
+        <tr>
+            <td><code>/qr-stats</code></td>
+            <td>View question statistics and metrics</td>
+        </tr>
+    </table>
+
+    <h2>💡 Best Practices</h2>
+
+    <h3>When Asking Questions</h3>
+    <ul>
+        <li>Be specific and clear about what you need</li>
+        <li>Include context (what you've tried, error messages, etc.)</li>
+        <li>Ask in the appropriate channel for the topic</li>
+        <li>Wait for the escalation system to work - avoid reposting immediately</li>
+    </ul>
+
+    <h3>When Answering Questions</h3>
+    <ul>
+        <li>Reply in a thread to keep the channel organized</li>
+        <li>If you're not sure, say so - it helps others know to jump in</li>
+        <li>Mark questions resolved with ✅ emoji (if in emoji_only or hybrid mode)</li>
+        <li>If a question is off-topic or unclear, suggest clarification</li>
+    </ul>
+
+    <h2>🆘 Troubleshooting</h2>
+
+    <h3>My question wasn't detected</h3>
+    <ul>
+        <li>Make sure your message ends with a question mark OR starts with a question word</li>
+        <li>Check if the bot has been invited to the channel</li>
+        <li>Verify the message is at least 10 characters long</li>
+    </ul>
+
+    <h3>Question was marked answered but shouldn't be</h3>
+    <ul>
+        <li>This can happen in <code>thread_auto</code> mode if someone replies but doesn't fully answer</li>
+        <li>Ask your admin to consider switching to <code>hybrid</code> mode for better control</li>
+    </ul>
+
+    <h3>Not getting escalation notifications</h3>
+    <ul>
+        <li>Check if you're in the configured user group for escalations</li>
+        <li>Verify notification settings for the escalation channel</li>
+        <li>Ask your admin to run <code>/qr-config</code> to check settings</li>
+    </ul>
+
+    <div class="footer">
+        <p><strong>Slack Question Router</strong> - User Guide v1.0</p>
+        <p>November 2024 • Fiddlehead Farm, LLC</p>
+        <p>For admin features, see the Admin Guide</p>
+    </div>
+</body>
+</html>
