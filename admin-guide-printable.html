@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Slack Question Router - Administrator Guide</title>
+    <style>
+        /* Print-friendly styles */
+        @media print {
+            body { margin: 0; padding: 20px; }
+            h1, h2, h3 { page-break-after: avoid; }
+            .page-break { page-break-before: always; }
+            a { color: #000; text-decoration: none; }
+            code { background: #f4f4f4; padding: 2px 6px; border: 1px solid #ddd; }
+            table { page-break-inside: avoid; }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            color: #2d3748;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #4a5568;
+            margin-top: 50px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+
+        h3 {
+            color: #2d3748;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        code {
+            background: #f7fafc;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #667eea;
+        }
+
+        .info-box {
+            background: #ebf8ff;
+            border-left: 4px solid #4299e1;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .warning-box {
+            background: #fffaf0;
+            border-left: 4px solid #f6ad55;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .success-box {
+            background: #f0fff4;
+            border-left: 4px solid #48bb78;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+
+        li {
+            margin: 10px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+        }
+
+        .command-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .command-card h4 {
+            color: #667eea;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .toc {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .toc li {
+            margin: 8px 0;
+        }
+
+        .footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+            text-align: center;
+            color: #718096;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <h1>⚙️ Slack Question Router - Administrator Guide</h1>
+
+    <div class="info-box">
+        <strong>For Workspace Administrators</strong><br>
+        This guide covers configuration, management, and administration of the Slack Question Router bot.
+    </div>
+
+    <div class="toc">
+        <h3>Table of Contents</h3>
+        <ul>
+            <li>1. Initial Setup</li>
+            <li>2. Configuration Commands</li>
+            <li>3. Answer Detection Modes</li>
+            <li>4. Escalation System</li>
+            <li>5. Per-Channel Configuration</li>
+            <li>6. Monitoring & Statistics</li>
+            <li>7. Testing & Troubleshooting</li>
+            <li>8. Best Practices</li>
+        </ul>
+    </div>
+
+    <h2 class="page-break">1. Initial Setup</h2>
+
+    <h3>Using the Setup Wizard</h3>
+    <p>The fastest way to configure your workspace:</p>
+
+    <div class="command-card">
+        <h4><code>/qr-setup</code></h4>
+        <p>Opens the comprehensive setup wizard that walks you through:</p>
+        <ol>
+            <li>Selecting escalation timing (how long before alerts)</li>
+            <li>Choosing user groups for first-level escalation</li>
+            <li>Setting escalation channels for second-level alerts</li>
+            <li>Configuring answer detection mode</li>
+            <li>Testing your configuration</li>
+        </ol>
+    </div>
+
+    <div class="success-box">
+        <strong>✓ Recommended:</strong> Use <code>/qr-setup</code> for first-time configuration. It validates all settings and provides helpful guidance.
+    </div>
+
+    <h2>2. Configuration Commands</h2>
+
+    <h3>Main Configuration</h3>
+
+    <div class="command-card">
+        <h4><code>/qr-config</code></h4>
+        <p><strong>Purpose:</strong> Opens the main configuration modal for workspace-wide settings.</p>
+        <p><strong>What You Can Configure:</strong></p>
+        <ul>
+            <li>First escalation timing (1-1440 minutes)</li>
+            <li>Second escalation timing (must be greater than first)</li>
+            <li>Final escalation timing</li>
+            <li>Answer detection mode (emoji_only, thread_auto, hybrid)</li>
+        </ul>
+        <p><strong>When to Use:</strong> Adjusting global workspace escalation settings.</p>
+    </div>
+
+    <div class="command-card">
+        <h4><code>/qr-targets</code></h4>
+        <p><strong>Purpose:</strong> Manage multi-tier escalation targets.</p>
+        <p><strong>Features:</strong></p>
+        <ul>
+            <li>Add/remove escalation targets at any level (1, 2, 3, etc.)</li>
+            <li>Configure different target types: users, user groups, or channels</li>
+            <li>Set priority order within each level</li>
+            <li>Enable/disable targets without deleting them</li>
+            <li>View all configured escalation paths</li>
+        </ul>
+        <p><strong>Example:</strong> Level 1 → @support-team, Level 2 → #urgent-questions, Level 3 → @leadership</p>
+    </div>
+
+    <h3>Channel-Specific Configuration</h3>
+
+    <div class="command-card">
+        <h4><code>/qr-channel-config</code></h4>
+        <p><strong>Purpose:</strong> Override workspace defaults for specific channels.</p>
+        <p><strong>Use Cases:</strong></p>
+        <ul>
+            <li>High-priority channel needs faster escalation (e.g., #critical-support)</li>
+            <li>Casual channel needs slower escalation (e.g., #general)</li>
+            <li>Disable escalation entirely for certain channels</li>
+            <li>Use different answer detection mode per channel</li>
+        </ul>
+        <p><strong>Settings Override:</strong> Channel settings take precedence over workspace defaults.</p>
+    </div>
+
+    <div class="command-card">
+        <h4><code>/qr-channels</code></h4>
+        <p><strong>Purpose:</strong> List all channels with custom settings.</p>
+        <p><strong>Shows:</strong></p>
+        <ul>
+            <li>Channel name and ID</li>
+            <li>Custom escalation timings</li>
+            <li>Whether escalation is enabled</li>
+            <li>Answer detection mode override</li>
+        </ul>
+        <p><strong>When to Use:</strong> Auditing which channels have special configurations.</p>
+    </div>
+
+    <h2 class="page-break">3. Answer Detection Modes</h2>
+
+    <p>Choose how questions are marked as answered:</p>
+
+    <table>
+        <tr>
+            <th>Mode</th>
+            <th>Behavior</th>
+            <th>Best For</th>
+            <th>Considerations</th>
+        </tr>
+        <tr>
+            <td><strong>emoji_only</strong></td>
+            <td>Requires ✅ or ✔️ emoji reaction to mark answered</td>
+            <td>Customer support, IT helpdesk, critical channels</td>
+            <td>Most precise tracking, but requires team training</td>
+        </tr>
+        <tr>
+            <td><strong>thread_auto</strong></td>
+            <td>Any thread reply automatically marks as answered</td>
+            <td>Casual channels, internal Q&A, social channels</td>
+            <td>Fast and automatic, but may have false positives</td>
+        </tr>
+        <tr>
+            <td><strong>hybrid</strong></td>
+            <td>Replies pause escalation; emoji marks complete</td>
+            <td>Most teams - balances automation with control</td>
+            <td>Recommended default: prevents spam, tracks resolution</td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>💡 Recommendation:</strong> Start with <code>hybrid</code> mode. It prevents escalation spam when conversations begin, while still requiring explicit confirmation for metrics.
+    </div>
+
+    <h2>4. Escalation System</h2>
+
+    <h3>How Multi-Tier Escalation Works</h3>
+
+    <p>The Question Router supports unlimited escalation levels with flexible targets:</p>
+
+    <ol>
+        <li><strong>Grace Period:</strong> Question is tracked but no action taken (allows natural response)</li>
+        <li><strong>Level 1 Escalation:</strong> First configured targets are notified</li>
+        <li><strong>Level 2 Escalation:</strong> Second tier targets are notified</li>
+        <li><strong>Level 3+ Escalation:</strong> Continue through additional tiers as configured</li>
+    </ol>
+
+    <h3>Target Types</h3>
+
+    <table>
+        <tr>
+            <th>Target Type</th>
+            <th>Example</th>
+            <th>How It Works</th>
+            <th>When to Use</th>
+        </tr>
+        <tr>
+            <td><strong>User Group</strong></td>
+            <td>@support-team</td>
+            <td>Mentions the group in question thread</td>
+            <td>Teams with rotating members or on-call schedules</td>
+        </tr>
+        <tr>
+            <td><strong>Individual User</strong></td>
+            <td>@john-doe</td>
+            <td>Directly mentions specific person</td>
+            <td>Team leads, specialists, escalation managers</td>
+        </tr>
+        <tr>
+            <td><strong>Channel</strong></td>
+            <td>#urgent-questions</td>
+            <td>Posts question to escalation channel</td>
+            <td>Visibility to wider audience, permanent record</td>
+        </tr>
+    </table>
+
+    <h3>Configuring Escalation Timing</h3>
+
+    <div class="warning-box">
+        <strong>⚠️ Important Rules:</strong>
+        <ul>
+            <li>Each escalation level must have longer timing than the previous</li>
+            <li>Minimum time: 1 minute</li>
+            <li>Maximum time: 1440 minutes (24 hours)</li>
+            <li>Timing applies from when question was originally asked</li>
+        </ul>
+    </div>
+
+    <p><strong>Example Configuration:</strong></p>
+    <ul>
+        <li>First escalation: 2 minutes (fast response for critical channels)</li>
+        <li>Second escalation: 5 minutes (wider team notification)</li>
+        <li>Third escalation: 30 minutes (management alert)</li>
+    </ul>
+
+    <h2 class="page-break">5. Per-Channel Configuration</h2>
+
+    <h3>When to Use Channel Overrides</h3>
+
+    <p>Channel-specific settings let you customize behavior for different channel types:</p>
+
+    <table>
+        <tr>
+            <th>Channel Type</th>
+            <th>Recommended Settings</th>
+            <th>Reason</th>
+        </tr>
+        <tr>
+            <td><strong>#critical-support</strong></td>
+            <td>Fast escalation (1min, 3min)<br>emoji_only mode</td>
+            <td>High priority, need quick response confirmation</td>
+        </tr>
+        <tr>
+            <td><strong>#general-questions</strong></td>
+            <td>Slow escalation (10min, 30min)<br>hybrid mode</td>
+            <td>Lower priority, natural discussion flow</td>
+        </tr>
+        <tr>
+            <td><strong>#social</strong></td>
+            <td>Escalation disabled or<br>thread_auto mode</td>
+            <td>Casual conversation, not time-sensitive</td>
+        </tr>
+        <tr>
+            <td><strong>#internal-it</strong></td>
+            <td>Medium escalation (5min, 15min)<br>hybrid mode</td>
+            <td>Internal team, balance speed and spam</td>
+        </tr>
+    </table>
+
+    <h3>Steps to Configure a Channel</h3>
+
+    <ol>
+        <li>Run <code>/qr-channel-config</code> in the target channel</li>
+        <li>Choose whether to enable or disable escalation</li>
+        <li>Set custom escalation timings (or leave blank for workspace defaults)</li>
+        <li>Select answer detection mode override (or use workspace default)</li>
+        <li>Save configuration</li>
+        <li>Verify with <code>/qr-channels</code> to see it listed</li>
+    </ol>
+
+    <h2>6. Monitoring & Statistics</h2>
+
+    <div class="command-card">
+        <h4><code>/qr-stats</code></h4>
+        <p><strong>Purpose:</strong> View comprehensive question metrics.</p>
+        <p><strong>Metrics Shown:</strong></p>
+        <ul>
+            <li>Total questions asked in workspace</li>
+            <li>Questions answered vs. unanswered</li>
+            <li>Answer rate percentage</li>
+            <li>Average response time</li>
+            <li>Current escalation configuration summary</li>
+            <li>Breakdown by time period (if supported)</li>
+        </ul>
+        <p><strong>Best Practice:</strong> Review stats weekly to identify trends and adjust settings.</p>
+    </div>
+
+    <h3>App Home Dashboard</h3>
+
+    <p>Access the App Home tab in Slack to view:</p>
+    <ul>
+        <li>Current configuration status</li>
+        <li>Recent escalations</li>
+        <li>Channel-specific settings summary</li>
+        <li>Quick links to configuration commands</li>
+        <li>Onboarding checklist for new workspaces</li>
+    </ul>
+
+    <h3>What to Monitor</h3>
+
+    <table>
+        <tr>
+            <th>Metric</th>
+            <th>What It Means</th>
+            <th>Action If Concerning</th>
+        </tr>
+        <tr>
+            <td><strong>Low Answer Rate</strong><br>(&lt;70%)</td>
+            <td>Many questions going unanswered</td>
+            <td>Reduce escalation timing, review escalation targets, check team capacity</td>
+        </tr>
+        <tr>
+            <td><strong>High Avg Response Time</strong><br>(&gt;30min)</td>
+            <td>Slow team response</td>
+            <td>Faster escalation timing, add more escalation targets, review staffing</td>
+        </tr>
+        <tr>
+            <td><strong>Excessive Escalations</strong></td>
+            <td>Too many questions reaching higher tiers</td>
+            <td>Earlier timing on first escalation, check if questions are clear</td>
+        </tr>
+        <tr>
+            <td><strong>No Questions Detected</strong></td>
+            <td>Bot may not be invited to channels</td>
+            <td>Verify bot is in channels, check question patterns</td>
+        </tr>
+    </table>
+
+    <h2 class="page-break">7. Testing & Troubleshooting</h2>
+
+    <div class="command-card">
+        <h4><code>/qr-test</code></h4>
+        <p><strong>Purpose:</strong> Verify bot is running and see user groups.</p>
+        <p><strong>Shows:</strong> All user groups in workspace with their IDs (helpful for configuration).</p>
+    </div>
+
+    <div class="command-card">
+        <h4><code>/qr-test-escalation</code></h4>
+        <p><strong>Purpose:</strong> Test your escalation configuration without waiting.</p>
+        <p><strong>How It Works:</strong></p>
+        <ol>
+            <li>Creates a test question</li>
+            <li>Immediately triggers escalation (bypasses timing)</li>
+            <li>Shows what targets would be notified at each level</li>
+            <li>Validates your configuration</li>
+        </ol>
+        <p><strong>When to Use:</strong> After changing configuration, before going live, troubleshooting.</p>
+    </div>
+
+    <h3>Common Issues & Solutions</h3>
+
+    <table>
+        <tr>
+            <th>Problem</th>
+            <th>Likely Cause</th>
+            <th>Solution</th>
+        </tr>
+        <tr>
+            <td>Questions not detected</td>
+            <td>Bot not invited to channel</td>
+            <td>Use <code>/invite @Question Router</code> in the channel</td>
+        </tr>
+        <tr>
+            <td>Escalations not firing</td>
+            <td>No targets configured or timing too long</td>
+            <td>Run <code>/qr-targets</code> to add targets, check timing with <code>/qr-config</code></td>
+        </tr>
+        <tr>
+            <td>User group mentions not working</td>
+            <td>Incorrect group ID or group doesn't exist</td>
+            <td>Use <code>/qr-test</code> to see valid group IDs</td>
+        </tr>
+        <tr>
+            <td>Database error on startup</td>
+            <td>Missing migrated_to_targets column</td>
+            <td>See MIGRATIONS.md and run database migration</td>
+        </tr>
+        <tr>
+            <td>Too many false positives</td>
+            <td>Rhetorical questions being detected</td>
+            <td>Users can dismiss with reactions, adjust detection sensitivity</td>
+        </tr>
+    </table>
+
+    <h2>8. Best Practices</h2>
+
+    <h3>For Optimal Performance</h3>
+
+    <ul>
+        <li><strong>Start Conservative:</strong> Begin with longer escalation times (5min, 15min) and adjust based on actual response patterns</li>
+        <li><strong>Use Hybrid Mode:</strong> Best balance for most teams - stops spam but requires confirmation</li>
+        <li><strong>Create Dedicated Escalation Channel:</strong> Set up #urgent-questions with notifications enabled for level 2</li>
+        <li><strong>Configure User Groups:</strong> Use @support-team, @on-call, etc. rather than individual users for flexibility</li>
+        <li><strong>Monitor Weekly:</strong> Check <code>/qr-stats</code> every week to identify trends</li>
+        <li><strong>Document Your Config:</strong> Keep notes on why you chose certain timings for future reference</li>
+        <li><strong>Test Before Launch:</strong> Use <code>/qr-test-escalation</code> to verify everything works</li>
+        <li><strong>Train Your Team:</strong> Make sure everyone knows about emoji reactions and answer detection mode</li>
+    </ul>
+
+    <h3>Workspace Rollout Checklist</h3>
+
+    <ol>
+        <li>☐ Run <code>/qr-setup</code> to configure initial settings</li>
+        <li>☐ Set up escalation targets with <code>/qr-targets</code></li>
+        <li>☐ Create dedicated escalation channel (e.g., #urgent-questions)</li>
+        <li>☐ Invite bot to all monitored channels</li>
+        <li>☐ Configure any per-channel overrides with <code>/qr-channel-config</code></li>
+        <li>☐ Run <code>/qr-test-escalation</code> to verify</li>
+        <li>☐ Share user guide with team</li>
+        <li>☐ Monitor first week closely and adjust settings as needed</li>
+        <li>☐ Schedule weekly stats review meetings</li>
+    </ol>
+
+    <h3>Team Training Tips</h3>
+
+    <ul>
+        <li>Share the User Guide PDF with all team members</li>
+        <li>Demonstrate how to mark questions answered (based on your mode)</li>
+        <li>Explain why escalation exists (ensure nothing falls through cracks)</li>
+        <li>Show how to post good questions (clear, specific, proper formatting)</li>
+        <li>Practice in a test channel first</li>
+    </ul>
+
+    <div class="success-box">
+        <strong>🎉 Pro Tip:</strong> After setup, post an announcement in your main channel explaining:
+        <ul>
+            <li>What Question Router does</li>
+            <li>Which channels it monitors</li>
+            <li>How to mark questions answered</li>
+            <li>Who gets escalation notifications</li>
+        </ul>
+        This prevents confusion and ensures smooth adoption!
+    </div>
+
+    <h2 class="page-break">Quick Reference: All Commands</h2>
+
+    <table>
+        <tr>
+            <th>Command</th>
+            <th>Purpose</th>
+            <th>Who Should Use</th>
+        </tr>
+        <tr>
+            <td><code>/qr-setup</code></td>
+            <td>Initial setup wizard</td>
+            <td>Admins (first time)</td>
+        </tr>
+        <tr>
+            <td><code>/qr-config</code></td>
+            <td>Workspace-wide settings</td>
+            <td>Admins</td>
+        </tr>
+        <tr>
+            <td><code>/qr-targets</code></td>
+            <td>Manage escalation targets</td>
+            <td>Admins</td>
+        </tr>
+        <tr>
+            <td><code>/qr-channel-config</code></td>
+            <td>Per-channel overrides</td>
+            <td>Admins</td>
+        </tr>
+        <tr>
+            <td><code>/qr-channels</code></td>
+            <td>List configured channels</td>
+            <td>Admins</td>
+        </tr>
+        <tr>
+            <td><code>/qr-stats</code></td>
+            <td>View statistics</td>
+            <td>Everyone</td>
+        </tr>
+        <tr>
+            <td><code>/qr-test</code></td>
+            <td>Test bot & see user groups</td>
+            <td>Everyone</td>
+        </tr>
+        <tr>
+            <td><code>/qr-test-escalation</code></td>
+            <td>Test escalation config</td>
+            <td>Admins</td>
+        </tr>
+    </table>
+
+    <div class="footer">
+        <p><strong>Slack Question Router</strong> - Administrator Guide v1.0</p>
+        <p>November 2024 • Fiddlehead Farm, LLC</p>
+        <p>Built with Node.js, TypeScript, Slack Bolt SDK, Prisma, PostgreSQL</p>
+    </div>
+</body>
+</html>
