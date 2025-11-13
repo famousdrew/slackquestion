@@ -11,8 +11,13 @@ import { registerSetupCommand } from './commands/setupCommand.js';
 import { registerChannelConfigCommand } from './commands/channelConfigCommand.js';
 import { disconnectDb } from './utils/db.js';
 import { startEscalationEngine, stopEscalationEngine } from './services/escalationEngine.js';
+import { validateEnv } from './utils/env.js';
 
+// Load environment variables
 dotenv.config();
+
+// Validate environment variables before starting
+validateEnv();
 
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
@@ -70,6 +75,26 @@ process.on('SIGINT', async () => {
   stopEscalationEngine();
   await disconnectDb();
   process.exit(0);
+});
+
+// Global error handlers
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Promise Rejection at:', promise);
+  console.error('   Reason:', reason);
+  // Log but don't exit - let the app continue running
+});
+
+process.on('uncaughtException', async (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  console.error('   Stack:', error.stack);
+  // This is serious - attempt graceful shutdown
+  try {
+    stopEscalationEngine();
+    await disconnectDb();
+  } catch (shutdownError) {
+    console.error('Error during emergency shutdown:', shutdownError);
+  }
+  process.exit(1);
 });
 
 // Start the app

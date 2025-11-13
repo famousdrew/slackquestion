@@ -13,7 +13,7 @@ import {
 } from './escalationTargetService.js';
 import { ESCALATION_ENGINE, ESCALATION_LEVEL, QUESTION_STATUS } from '../utils/constants.js';
 import { buildThreadLink, getTeamDomain } from '../utils/slackHelpers.js';
-import { getEffectiveChannelConfig, type ChannelSettings } from './channelConfigService.js';
+import { getBatchEffectiveChannelConfigs, type ChannelSettings } from './channelConfigService.js';
 
 // Type for escalation execution results
 interface EscalationResult {
@@ -70,7 +70,6 @@ async function checkForEscalations(app: App) {
       await migrateFromLegacyConfig(workspace.id);
 
       // Find all unanswered questions for this workspace
-      // We'll check each one individually with its channel-specific config
       const questions = await prisma.question.findMany({
         where: {
           workspaceId: workspace.id,
@@ -85,14 +84,23 @@ async function checkForEscalations(app: App) {
         },
       });
 
+      // Skip if no questions to process
+      if (questions.length === 0) {
+        continue;
+      }
+
+      // Batch fetch channel configs to prevent N+1 query problem
+      const channelIds = [...new Set(questions.map(q => q.channelId))];
+      const channelConfigsMap = await getBatchEffectiveChannelConfigs(channelIds, {
+        firstEscalationMinutes: config.firstEscalationMinutes,
+        secondEscalationMinutes: config.secondEscalationMinutes,
+        finalEscalationMinutes: config.finalEscalationMinutes,
+        answerDetectionMode: config.answerDetectionMode as 'emoji_only' | 'thread_auto' | 'hybrid',
+      });
+
       for (const question of questions) {
-        // Get effective config for this channel (workspace defaults + channel overrides)
-        const effectiveConfig = await getEffectiveChannelConfig(question.channelId, {
-          firstEscalationMinutes: config.firstEscalationMinutes,
-          secondEscalationMinutes: config.secondEscalationMinutes,
-          finalEscalationMinutes: config.finalEscalationMinutes,
-          answerDetectionMode: config.answerDetectionMode as 'emoji_only' | 'thread_auto' | 'hybrid',
-        });
+        // Get effective config from the pre-fetched map
+        const effectiveConfig = channelConfigsMap.get(question.channelId)!;
 
         // Skip if escalation is disabled for this channel
         if (!effectiveConfig.escalationEnabled) {
