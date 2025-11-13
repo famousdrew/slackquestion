@@ -1,6 +1,7 @@
 /**
  * Environment Variable Validation
  * Ensures all required environment variables are present and properly formatted
+ * Note: Uses console.log directly since this runs before logger is initialized
  */
 
 interface EnvConfig {
