@@ -13,6 +13,7 @@ import { disconnectDb } from './utils/db.js';
 import { startEscalationEngine, stopEscalationEngine } from './services/escalationEngine.js';
 import { validateEnv } from './utils/env.js';
 import { startHealthCheckServer, stopHealthCheckServer } from './services/healthCheck.js';
+import { logger } from './utils/logger.js';
 
 // Load environment variables
 dotenv.config();
@@ -65,7 +66,7 @@ app.command('/qr-test', async ({ command, ack, respond, client, logger }) => {
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully...');
+  logger.info('SIGTERM received, shutting down gracefully...');
   stopEscalationEngine();
   await stopHealthCheckServer();
   await disconnectDb();
@@ -73,7 +74,7 @@ process.on('SIGTERM', async () => {
 });
 
 process.on('SIGINT', async () => {
-  console.log('SIGINT received, shutting down gracefully...');
+  logger.info('SIGINT received, shutting down gracefully...');
   stopEscalationEngine();
   await stopHealthCheckServer();
   await disconnectDb();
@@ -82,21 +83,22 @@ process.on('SIGINT', async () => {
 
 // Global error handlers
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Promise Rejection at:', promise);
-  console.error('   Reason:', reason);
+  logger.error('Unhandled Promise Rejection', {
+    reason: reason instanceof Error ? reason.message : String(reason),
+    stack: reason instanceof Error ? reason.stack : undefined,
+  });
   // Log but don't exit - let the app continue running
 });
 
 process.on('uncaughtException', async (error) => {
-  console.error('❌ Uncaught Exception:', error);
-  console.error('   Stack:', error.stack);
+  logger.error('Uncaught Exception - initiating shutdown', error);
   // This is serious - attempt graceful shutdown
   try {
     stopEscalationEngine();
     await stopHealthCheckServer();
     await disconnectDb();
   } catch (shutdownError) {
-    console.error('Error during emergency shutdown:', shutdownError);
+    logger.error('Error during emergency shutdown', shutdownError as Error);
   }
   process.exit(1);
 });
@@ -107,15 +109,16 @@ process.on('uncaughtException', async (error) => {
     // Socket Mode doesn't need a port - it uses WebSockets
     await app.start();
 
-    console.log(`⚡️ Slack Question Router is running in Socket Mode!`);
-    console.log(`📊 Question detection is active`);
-    console.log(`💾 Database connected`);
+    logger.info('Slack Question Router started in Socket Mode');
+    logger.info('Question detection is active');
+    logger.info('Database connected');
 
     // Test if we can call Slack API
     const auth = await app.client.auth.test();
-    console.log(`✅ Connected to Slack workspace: ${auth.team}`);
-    console.log(`🤖 Bot user: ${auth.user}`);
-    console.log(`🎉 Ready to receive events!`);
+    logger.info('Connected to Slack workspace', {
+      workspace: auth.team,
+      botUser: auth.user,
+    });
 
     // Start escalation engine
     startEscalationEngine(app);
@@ -123,8 +126,10 @@ process.on('uncaughtException', async (error) => {
     // Start health check server
     const healthCheckPort = parseInt(process.env.HEALTH_CHECK_PORT || '3000');
     startHealthCheckServer(app, healthCheckPort);
+
+    logger.info('All systems ready - awaiting events');
   } catch (error) {
-    console.error('❌ Failed to start bot:', error);
+    logger.error('Failed to start bot', error as Error);
     process.exit(1);
   }
 })();

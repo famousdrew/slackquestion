@@ -15,6 +15,7 @@ import { ESCALATION_ENGINE, ESCALATION_LEVEL, QUESTION_STATUS } from '../utils/c
 import { buildThreadLink, getTeamDomain } from '../utils/slackHelpers.js';
 import { getBatchEffectiveChannelConfigs, type ChannelSettings } from './channelConfigService.js';
 import { setEscalationEngineStatus } from './healthCheck.js';
+import { logger } from '../utils/logger.js';
 
 // Type for escalation execution results
 interface EscalationResult {
@@ -35,9 +36,10 @@ const FALLBACK_CHANNEL = process.env.ESCALATION_CHANNEL || null;
 let intervalId: NodeJS.Timeout | null = null;
 
 export function startEscalationEngine(app: App) {
-  console.log('🚨 Starting escalation engine...');
-  console.log(`   Checking every ${CHECK_INTERVAL_MS / 1000} seconds`);
-  console.log(`   Using per-workspace configuration from database`);
+  logger.info('Escalation engine started', {
+    checkInterval: `${CHECK_INTERVAL_MS / 1000}s`,
+    configSource: 'database',
+  });
 
   intervalId = setInterval(async () => {
     await checkForEscalations(app);
@@ -51,7 +53,7 @@ export function stopEscalationEngine() {
   if (intervalId) {
     clearInterval(intervalId);
     intervalId = null;
-    console.log('🛑 Escalation engine stopped');
+    logger.info('Escalation engine stopped');
   }
 
   // Mark escalation engine as stopped for health checks

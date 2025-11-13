@@ -5,6 +5,7 @@
 import http from 'http';
 import { App } from '@slack/bolt';
 import { prisma } from '../utils/db.js';
+import { logger } from '../utils/logger.js';
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -66,7 +67,7 @@ export function startHealthCheckServer(app: App, port: number = 3000): void {
 
       res.end(JSON.stringify(healthStatus, null, 2));
     } catch (error) {
-      console.error('Error in health check:', error);
+      logger.error('Error in health check', error as Error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         status: 'unhealthy',
@@ -77,7 +78,7 @@ export function startHealthCheckServer(app: App, port: number = 3000): void {
   });
 
   server.listen(port, () => {
-    console.log(`🏥 Health check endpoint available at http://localhost:${port}/health`);
+    logger.info('Health check endpoint started', { port, endpoint: `/health` });
   });
 }
 
@@ -88,7 +89,7 @@ export function stopHealthCheckServer(): Promise<void> {
   return new Promise((resolve) => {
     if (server) {
       server.close(() => {
-        console.log('🛑 Health check server stopped');
+        logger.info('Health check server stopped');
         resolve();
       });
     } else {
