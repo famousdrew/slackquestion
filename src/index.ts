@@ -12,6 +12,7 @@ import { registerChannelConfigCommand } from './commands/channelConfigCommand.js
 import { disconnectDb } from './utils/db.js';
 import { startEscalationEngine, stopEscalationEngine } from './services/escalationEngine.js';
 import { validateEnv } from './utils/env.js';
+import { startHealthCheckServer, stopHealthCheckServer } from './services/healthCheck.js';
 
 // Load environment variables
 dotenv.config();
@@ -66,6 +67,7 @@ app.command('/qr-test', async ({ command, ack, respond, client, logger }) => {
 process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully...');
   stopEscalationEngine();
+  await stopHealthCheckServer();
   await disconnectDb();
   process.exit(0);
 });
@@ -73,6 +75,7 @@ process.on('SIGTERM', async () => {
 process.on('SIGINT', async () => {
   console.log('SIGINT received, shutting down gracefully...');
   stopEscalationEngine();
+  await stopHealthCheckServer();
   await disconnectDb();
   process.exit(0);
 });
@@ -90,6 +93,7 @@ process.on('uncaughtException', async (error) => {
   // This is serious - attempt graceful shutdown
   try {
     stopEscalationEngine();
+    await stopHealthCheckServer();
     await disconnectDb();
   } catch (shutdownError) {
     console.error('Error during emergency shutdown:', shutdownError);
@@ -115,6 +119,10 @@ process.on('uncaughtException', async (error) => {
 
     // Start escalation engine
     startEscalationEngine(app);
+
+    // Start health check server
+    const healthCheckPort = parseInt(process.env.HEALTH_CHECK_PORT || '3000');
+    startHealthCheckServer(app, healthCheckPort);
   } catch (error) {
     console.error('❌ Failed to start bot:', error);
     process.exit(1);
