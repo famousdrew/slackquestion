@@ -27,7 +27,9 @@
   "dependencies": {
     "@prisma/client": "^6.19.0",
     "@slack/bolt": "^4.6.0",
+    "@slack/oauth": "^3.0.4",
     "dotenv": "^17.2.3",
+    "express": "^5.1.0",
     "winston": "^3.18.3"
   },
   "devDependencies": {

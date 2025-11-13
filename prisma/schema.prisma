@@ -213,3 +213,26 @@ model EscalationTarget {
   @@index([workspaceId, escalationLevel, priority])
   @@map("escalation_targets")
 }
+
+model SlackInstallation {
+  id           String   @id @default(uuid())
+  teamId       String?  @unique @map("team_id")
+  enterpriseId String?  @unique @map("enterprise_id")
+  botToken     String   @map("bot_token") @db.Text
+  botUserId    String   @map("bot_user_id")
+  botScopes    String[] @map("bot_scopes")
+  userToken    String?  @map("user_token") @db.Text
+  userId       String?  @map("user_id")
+  userScopes   String[] @map("user_scopes")
+  incomingWebhook Json?  @map("incoming_webhook")
+  appId        String   @map("app_id")
+  tokenType    String   @default("bot") @map("token_type")
+  isEnterpriseInstall Boolean @default(false) @map("is_enterprise_install")
+  metadata     Json?    // Full installation data backup
+  installedAt  DateTime @default(now()) @map("installed_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([teamId])
+  @@index([enterpriseId])
+  @@map("slack_installations")
+}
