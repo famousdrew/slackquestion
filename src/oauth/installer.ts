@@ -4,6 +4,7 @@
  */
 
 import { InstallProvider, Installation, InstallURLOptions } from '@slack/oauth';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../utils/db.js';
 import { logger } from '../utils/logger.js';
 
@@ -42,11 +43,13 @@ export const installer = new InstallProvider({
           userToken: installation.user?.token,
           userId: installation.user?.id,
           userScopes: installation.user?.scopes || [],
-          incomingWebhook: installation.incomingWebhook || null,
+          incomingWebhook: installation.incomingWebhook
+            ? (installation.incomingWebhook as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
           appId: installation.appId || '',
           tokenType: installation.tokenType || 'bot',
           isEnterpriseInstall,
-          metadata: installation as any, // Store full installation as backup
+          metadata: installation as unknown as Prisma.InputJsonValue, // Store full installation as backup
           updatedAt: new Date(),
         };
 
@@ -126,7 +129,7 @@ export const installer = new InstallProvider({
         });
 
         // Return installation in the format Bolt expects
-        return installation.metadata as Installation;
+        return installation.metadata as unknown as Installation;
       } catch (error) {
         logger.error('Failed to fetch installation', {
           error: error instanceof Error ? error.message : String(error),
