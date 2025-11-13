@@ -2,7 +2,8 @@
  * App Home Tab Handler
  * Provides onboarding and configuration status for workspace admins
  */
-import { App } from '@slack/bolt';
+import boltPkg from '@slack/bolt';
+import type { App } from '@slack/bolt';
 import { ensureWorkspace, prisma } from '../utils/db.js';
 import { getWorkspaceConfig } from '../services/configService.js';
 import { buildThreadLink, getTeamDomain } from '../utils/slackHelpers.js';

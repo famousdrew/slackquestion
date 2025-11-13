@@ -3,7 +3,8 @@
  * Checks for unanswered questions every 30 seconds
  * Uses per-workspace configuration from database with flexible escalation targets
  */
-import { App } from '@slack/bolt';
+import boltPkg from '@slack/bolt';
+import type { App } from '@slack/bolt';
 import { prisma } from '../utils/db.js';
 import { getWorkspaceConfig } from './configService.js';
 import {

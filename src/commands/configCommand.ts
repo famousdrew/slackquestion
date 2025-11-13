@@ -2,7 +2,8 @@
  * Configuration Command Handler with Modal UI
  * Allows admins to configure workspace settings via Slack modal
  */
-import { App } from '@slack/bolt';
+import boltPkg from '@slack/bolt';
+import type { App } from '@slack/bolt';
 import { ensureWorkspace, prisma } from '../utils/db.js';
 import {
   getWorkspaceConfig,

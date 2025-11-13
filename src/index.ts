@@ -1,4 +1,7 @@
-import { App, ExpressReceiver } from '@slack/bolt';
+import boltPkg from '@slack/bolt';
+const App = (boltPkg as any).App || boltPkg;
+const ExpressReceiver = (boltPkg as any).ExpressReceiver;
+import type { App as AppType } from '@slack/bolt';
 import dotenv from 'dotenv';
 import { registerMessageHandler } from './events/messageHandler.js';
 import { registerReactionHandler } from './events/reactionHandler.js';
@@ -66,14 +69,14 @@ registerTestEscalationCommand(app);
 registerChannelConfigCommand(app);
 
 // Test command
-app.command('/qr-test', async ({ command, ack, respond, client, logger }) => {
+app.command('/qr-test', async ({ command, ack, respond, client, logger }: any) => {
   await ack();
 
   // Get user groups to help find the ID
   try {
     const result = await client.usergroups.list();
     logger.info(`Usergroups result: ${JSON.stringify(result)}`);
-    const groups = result.usergroups?.map(g => `• @${g.handle} - ID: \`${g.id}\``).join('\n') || 'No user groups found';
+    const groups = result.usergroups?.map((g: any) => `• @${g.handle} - ID: \`${g.id}\``).join('\n') || 'No user groups found';
 
     await respond({
       response_type: 'ephemeral',
@@ -128,7 +131,7 @@ process.on('uncaughtException', async (error) => {
 });
 
 // Add custom routes for OAuth and health checks
-receiver.router.get('/', (req, res) => {
+receiver.router.get('/', (req: any, res: any) => {
   res.send(`
     <!DOCTYPE html>
     <html>

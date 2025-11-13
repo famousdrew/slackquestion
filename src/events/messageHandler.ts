@@ -2,7 +2,8 @@
  * Message Event Handler
  * Listens for messages in channels and detects questions
  */
-import { App } from '@slack/bolt';
+import boltPkg from '@slack/bolt';
+import type { App } from '@slack/bolt';
 import { isQuestion } from '../services/questionDetector.js';
 import { storeQuestion, questionExists } from '../services/questionStorage.js';
 import { ensureWorkspace, ensureChannel, ensureUser } from '../utils/db.js';

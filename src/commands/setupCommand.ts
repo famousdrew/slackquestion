@@ -2,7 +2,8 @@
  * Unified Setup Wizard
  * Guides new users through complete configuration in one flow
  */
-import { App } from '@slack/bolt';
+import boltPkg from '@slack/bolt';
+import type { App } from '@slack/bolt';
 import { ensureWorkspace, prisma } from '../utils/db.js';
 import { getWorkspaceConfig } from '../services/configService.js';
 import { getEscalationTargets } from '../services/escalationTargetService.js';

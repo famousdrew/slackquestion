@@ -2,7 +2,8 @@
  * Stats Command Handler
  * Displays question/answer statistics
  */
-import { App } from '@slack/bolt';
+import boltPkg from '@slack/bolt';
+import type { App } from '@slack/bolt';
 import { getQuestionStats } from '../services/questionStorage.js';
 import { ensureWorkspace } from '../utils/db.js';
 

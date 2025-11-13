@@ -3,7 +3,8 @@
  * Provides HTTP endpoint for monitoring application health
  */
 import http from 'http';
-import { App } from '@slack/bolt';
+import boltPkg from '@slack/bolt';
+import type { App } from '@slack/bolt';
 import { prisma } from '../utils/db.js';
 import { logger } from '../utils/logger.js';
 
