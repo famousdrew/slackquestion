@@ -14,6 +14,7 @@ import {
 import { ESCALATION_ENGINE, ESCALATION_LEVEL, QUESTION_STATUS } from '../utils/constants.js';
 import { buildThreadLink, getTeamDomain } from '../utils/slackHelpers.js';
 import { getBatchEffectiveChannelConfigs, type ChannelSettings } from './channelConfigService.js';
+import { setEscalationEngineStatus } from './healthCheck.js';
 
 // Type for escalation execution results
 interface EscalationResult {
@@ -41,6 +42,9 @@ export function startEscalationEngine(app: App) {
   intervalId = setInterval(async () => {
     await checkForEscalations(app);
   }, CHECK_INTERVAL_MS);
+
+  // Mark escalation engine as running for health checks
+  setEscalationEngineStatus(true);
 }
 
 export function stopEscalationEngine() {
@@ -49,6 +53,9 @@ export function stopEscalationEngine() {
     intervalId = null;
     console.log('🛑 Escalation engine stopped');
   }
+
+  // Mark escalation engine as stopped for health checks
+  setEscalationEngineStatus(false);
 }
 
 async function checkForEscalations(app: App) {
