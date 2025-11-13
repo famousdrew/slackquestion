@@ -158,6 +158,9 @@ export async function withRetry<T>(
   const opts = { ...DEFAULT_OPTIONS, ...options };
   let lastError: any;
 
+  // Check if user provided custom shouldRetry function
+  const hasCustomShouldRetry = options.shouldRetry !== undefined;
+
   for (let attempt = 1; attempt <= opts.maxAttempts; attempt++) {
     try {
       // Try the function
@@ -177,7 +180,11 @@ export async function withRetry<T>(
       lastError = error;
 
       // Check if we should retry this error
-      const shouldRetry = opts.shouldRetry(error) && isRetriableError(error);
+      // If custom shouldRetry is provided, it has final say
+      // Otherwise, use both custom (if any) AND built-in isRetriableError
+      const shouldRetry = hasCustomShouldRetry
+        ? opts.shouldRetry(error)
+        : opts.shouldRetry(error) && isRetriableError(error);
 
       // If this is the last attempt or error is not retriable, throw
       if (attempt >= opts.maxAttempts || !shouldRetry) {

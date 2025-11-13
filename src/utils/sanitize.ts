@@ -5,17 +5,25 @@
 
 /**
  * Sanitize a display name to prevent injection attacks
- * Allows only alphanumeric characters, spaces, hyphens, apostrophes, and dots
+ * Allows only alphanumeric characters (including Unicode), spaces, hyphens, apostrophes, and dots
  */
 export function sanitizeDisplayName(input: string): string {
   if (!input || typeof input !== 'string') {
     return '';
   }
 
-  // Remove any characters that aren't alphanumeric, space, hyphen, apostrophe, or dot
-  // Also handle common international characters
-  const sanitized = input
-    .replace(/[^\w\s\-'.]/g, '')
+  // Remove SQL injection patterns first
+  let sanitized = input
+    .replace(/--/g, '')           // SQL comment
+    .replace(/;/g, '')             // SQL statement separator
+    .replace(/<script/gi, '')      // Script tags
+    .replace(/<\/script>/gi, ''); // Closing script tags
+
+  // Keep only letters (including Unicode), numbers, spaces, hyphens, apostrophes, and dots
+  // \p{L} matches any letter in any language (requires /u flag)
+  // \p{N} matches any numeric character
+  sanitized = sanitized
+    .replace(/[^\p{L}\p{N}\s\-'.]/gu, '')
     .trim()
     .substring(0, 100); // Limit length
 

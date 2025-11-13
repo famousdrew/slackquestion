@@ -20,6 +20,9 @@ const defaultConfig: DetectionConfig = {
     'why does', 'why is', 'why can\'t',
     'who can', 'who should', 'who knows',
     'which', 'is there', 'are there',
+    'could you', 'could i', 'would you', 'would it',
+    'can you', 'can i', 'can we',
+    'does anyone', 'does this', 'does it',
   ],
   helpPatterns: [
     'does anyone know',
@@ -74,9 +77,9 @@ export function extractKeywords(text: string): string[] {
   const freq = new Map<string, number>();
   words.forEach(word => freq.set(word, (freq.get(word) || 0) + 1));
 
-  // Return top keywords
+  // Return top keywords (up to 10)
   return Array.from(freq.entries())
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
+    .slice(0, 10)
     .map(([word]) => word);
 }
