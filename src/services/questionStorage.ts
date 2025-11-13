@@ -4,6 +4,7 @@
  */
 import { prisma } from '../utils/db.js';
 import { extractKeywords } from './questionDetector.js';
+import { sanitizeMessageText } from '../utils/sanitize.js';
 
 export interface StoreQuestionParams {
   workspaceId: string;
@@ -22,7 +23,9 @@ export interface StoreQuestionParams {
  * Store a new question in the database
  */
 export async function storeQuestion(params: StoreQuestionParams) {
-  const keywords = extractKeywords(params.messageText);
+  // Sanitize message text to prevent excessively long content
+  const sanitizedMessageText = sanitizeMessageText(params.messageText);
+  const keywords = extractKeywords(sanitizedMessageText);
 
   return await prisma.question.create({
     data: {
@@ -31,7 +34,7 @@ export async function storeQuestion(params: StoreQuestionParams) {
       askerId: params.askerId,
       slackMessageId: params.slackMessageId,
       slackThreadId: params.slackThreadId,
-      messageText: params.messageText,
+      messageText: sanitizedMessageText,
       extractedKeywords: keywords,
       askedAt: params.askedAt,
       status: 'unanswered',

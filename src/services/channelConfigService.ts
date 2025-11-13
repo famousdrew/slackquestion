@@ -174,3 +174,50 @@ export async function getEffectiveChannelConfig(
     escalationEnabled: settings.escalationEnabled ?? true,
   };
 }
+
+/**
+ * Batch fetch effective configurations for multiple channels
+ * This prevents N+1 query problems when processing many questions
+ */
+export async function getBatchEffectiveChannelConfigs(
+  channelIds: string[],
+  workspaceConfig: {
+    firstEscalationMinutes: number;
+    secondEscalationMinutes: number;
+    finalEscalationMinutes: number;
+    answerDetectionMode: AnswerDetectionMode;
+  }
+): Promise<Map<string, {
+  firstEscalationMinutes: number;
+  secondEscalationMinutes: number;
+  finalEscalationMinutes: number;
+  answerDetectionMode: AnswerDetectionMode;
+  escalationEnabled: boolean;
+}>> {
+  // Fetch all channel configs in one query
+  const channels = await prisma.channel.findMany({
+    where: {
+      id: {
+        in: channelIds,
+      },
+    },
+  });
+
+  // Build a map of channel configs
+  const configMap = new Map();
+
+  for (const channelId of channelIds) {
+    const channel = channels.find(c => c.id === channelId);
+    const settings = (channel?.settings as ChannelSettings) || {};
+
+    configMap.set(channelId, {
+      firstEscalationMinutes: settings.firstEscalationMinutes ?? workspaceConfig.firstEscalationMinutes,
+      secondEscalationMinutes: settings.secondEscalationMinutes ?? workspaceConfig.secondEscalationMinutes,
+      finalEscalationMinutes: settings.finalEscalationMinutes ?? workspaceConfig.finalEscalationMinutes,
+      answerDetectionMode: settings.answerDetectionMode ?? workspaceConfig.answerDetectionMode,
+      escalationEnabled: settings.escalationEnabled ?? true,
+    });
+  }
+
+  return configMap;
+}

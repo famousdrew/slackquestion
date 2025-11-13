@@ -93,6 +93,7 @@ model Question {
   escalations       Escalation[]
   escalationEvents  EscalationEvent[]
 
+  @@unique([workspaceId, slackMessageId])
   @@index([status, askedAt])
   @@index([status, escalationLevel])
   @@index([channelId, askedAt])

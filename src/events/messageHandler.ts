@@ -8,6 +8,7 @@ import { storeQuestion, questionExists } from '../services/questionStorage.js';
 import { ensureWorkspace, ensureChannel, ensureUser } from '../utils/db.js';
 import { isZendeskMessage, extractZendeskTicketId, getZendeskBotUserId, extractAskerName } from '../services/zendeskDetector.js';
 import { prisma } from '../utils/db.js';
+import { sanitizeDisplayName, sanitizeMessageText } from '../utils/sanitize.js';
 import type { User } from '@prisma/client';
 
 export function registerMessageHandler(app: App) {
@@ -91,25 +92,29 @@ export function registerMessageHandler(app: App) {
       // Ensure user exists
       const user = await ensureUser(workspace.id, userId, userData);
 
-      // Check if we've already stored this question
-      const exists = await questionExists(workspace.id, messageTs);
-      if (exists) {
-        logger.info('Question already stored, skipping');
-        return;
+      // Store the question with race condition handling
+      // We try to store directly and handle duplicate errors rather than check-then-insert
+      let question;
+      try {
+        question = await storeQuestion({
+          workspaceId: workspace.id,
+          channelId: channel.id,
+          askerId: user.id,
+          slackMessageId: messageTs,
+          slackThreadId: threadTs,
+          messageText,
+          askedAt: new Date(parseFloat(messageTs) * 1000),
+        });
+        logger.info(`Question stored with ID: ${question.id}`);
+      } catch (error: any) {
+        // Handle unique constraint violation (duplicate message)
+        if (error.code === 'P2002') {
+          logger.info('Question already stored (concurrent insert), skipping');
+          return;
+        }
+        // Re-throw other errors
+        throw error;
       }
-
-      // Store the question
-      const question = await storeQuestion({
-        workspaceId: workspace.id,
-        channelId: channel.id,
-        askerId: user.id,
-        slackMessageId: messageTs,
-        slackThreadId: threadTs,
-        messageText,
-        askedAt: new Date(parseFloat(messageTs) * 1000),
-      });
-
-      logger.info(`Question stored with ID: ${question.id}`);
 
       // Add :question: emoji to acknowledge detection and signal tracking
       try {
@@ -247,46 +252,56 @@ async function handleZendeskSideConversation(message: any, client: any, logger: 
 
     // Try to extract the real asker's name from Zendesk message
     // Pattern: "Drew Clark in ticket #123:"
-    const zendeskAskerName = extractAskerName(messageText);
+    const rawZendeskAskerName = extractAskerName(messageText);
     let actualAsker = zendeskBotUser;
 
-    if (zendeskAskerName) {
-      logger.info(`Extracted asker name from Zendesk: "${zendeskAskerName}"`);
-      const matchedUser = await findSlackUserByName(workspace.id, zendeskAskerName);
+    if (rawZendeskAskerName) {
+      // Sanitize the name to prevent injection attacks
+      const zendeskAskerName = sanitizeDisplayName(rawZendeskAskerName);
 
-      if (matchedUser) {
-        actualAsker = matchedUser;
-        logger.info(`Matched Zendesk asker "${zendeskAskerName}" to Slack user ${matchedUser.displayName} (${matchedUser.slackUserId})`);
+      if (!zendeskAskerName) {
+        logger.warn(`Extracted asker name contains invalid characters: "${rawZendeskAskerName}"`);
       } else {
-        logger.info(`Could not match Zendesk asker "${zendeskAskerName}" to Slack user, using Zendesk bot`);
-      }
-    }
+        logger.info(`Extracted asker name from Zendesk: "${zendeskAskerName}"`);
+        const matchedUser = await findSlackUserByName(workspace.id, zendeskAskerName);
 
-    // Check if we've already stored this question
-    const exists = await questionExists(workspace.id, messageTs);
-    if (exists) {
-      logger.info('Side conversation already stored, skipping');
-      return;
+        if (matchedUser) {
+          actualAsker = matchedUser;
+          logger.info(`Matched Zendesk asker "${zendeskAskerName}" to Slack user ${matchedUser.displayName} (${matchedUser.slackUserId})`);
+        } else {
+          logger.info(`Could not match Zendesk asker "${zendeskAskerName}" to Slack user, using Zendesk bot`);
+        }
+      }
     }
 
     // Extract Zendesk ticket ID if present in message
     const ticketId = extractZendeskTicketId(messageText);
 
-    // Store the side conversation as a question
-    const question = await storeQuestion({
-      workspaceId: workspace.id,
-      channelId: channel.id,
-      askerId: actualAsker.id,  // Use matched user or fallback to Zendesk bot
-      slackMessageId: messageTs,
-      slackThreadId: threadTs,
-      messageText,
-      askedAt: new Date(parseFloat(messageTs) * 1000),
-      isSideConversation: true,
-      zendeskTicketId: ticketId,
-      sourceApp: 'zendesk',
-    });
-
-    logger.info(`Zendesk side conversation stored with ID: ${question.id}${ticketId ? ` (Ticket #${ticketId})` : ''}`);
+    // Store the side conversation as a question with race condition handling
+    let question;
+    try {
+      question = await storeQuestion({
+        workspaceId: workspace.id,
+        channelId: channel.id,
+        askerId: actualAsker.id,  // Use matched user or fallback to Zendesk bot
+        slackMessageId: messageTs,
+        slackThreadId: threadTs,
+        messageText,
+        askedAt: new Date(parseFloat(messageTs) * 1000),
+        isSideConversation: true,
+        zendeskTicketId: ticketId,
+        sourceApp: 'zendesk',
+      });
+      logger.info(`Zendesk side conversation stored with ID: ${question.id}${ticketId ? ` (Ticket #${ticketId})` : ''}`);
+    } catch (error: any) {
+      // Handle unique constraint violation (duplicate message)
+      if (error.code === 'P2002') {
+        logger.info('Side conversation already stored (concurrent insert), skipping');
+        return;
+      }
+      // Re-throw other errors
+      throw error;
+    }
 
     // Add :question: emoji to acknowledge detection
     try {
