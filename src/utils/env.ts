@@ -5,9 +5,10 @@
  */
 
 interface EnvConfig {
-  SLACK_BOT_TOKEN: string;
+  SLACK_CLIENT_ID: string;
+  SLACK_CLIENT_SECRET: string;
   SLACK_SIGNING_SECRET: string;
-  SLACK_APP_TOKEN: string;
+  SLACK_STATE_SECRET: string;
   DATABASE_URL: string;
   NODE_ENV?: string;
   FIRST_ESCALATION_MINUTES?: string;
@@ -20,9 +21,10 @@ interface EnvConfig {
  */
 export function validateEnv(): EnvConfig {
   const requiredVars = [
-    'SLACK_BOT_TOKEN',
+    'SLACK_CLIENT_ID',
+    'SLACK_CLIENT_SECRET',
     'SLACK_SIGNING_SECRET',
-    'SLACK_APP_TOKEN',
+    'SLACK_STATE_SECRET',
     'DATABASE_URL',
   ];
 
@@ -40,27 +42,38 @@ export function validateEnv(): EnvConfig {
     console.error('❌ Missing required environment variables:');
     missing.forEach((varName) => console.error(`   - ${varName}`));
     console.error('\n💡 Please check your .env file and ensure all required variables are set.');
+    console.error('💡 For OAuth V2, you need: SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SLACK_SIGNING_SECRET, SLACK_STATE_SECRET');
     process.exit(1);
   }
 
-  // Validate token formats
-  const botToken = process.env.SLACK_BOT_TOKEN!;
-  const appToken = process.env.SLACK_APP_TOKEN!;
+  // Validate OAuth credentials
+  const clientId = process.env.SLACK_CLIENT_ID!;
+  const clientSecret = process.env.SLACK_CLIENT_SECRET!;
   const signingSecret = process.env.SLACK_SIGNING_SECRET!;
+  const stateSecret = process.env.SLACK_STATE_SECRET!;
   const databaseUrl = process.env.DATABASE_URL!;
 
-  if (!botToken.startsWith('xoxb-')) {
-    invalid.push('SLACK_BOT_TOKEN must start with "xoxb-"');
+  // Validate Client ID format (should end with .apps.slack.com)
+  if (!clientId.includes('.apps.slack.com') && !clientId.match(/^\d+\.\d+$/)) {
+    invalid.push('SLACK_CLIENT_ID format appears invalid (should end with .apps.slack.com or be numeric)');
   }
 
-  if (!appToken.startsWith('xapp-')) {
-    invalid.push('SLACK_APP_TOKEN must start with "xapp-"');
+  // Validate Client Secret length (should be reasonably long)
+  if (clientSecret.length < 32) {
+    invalid.push('SLACK_CLIENT_SECRET appears to be invalid (too short, should be 32+ characters)');
   }
 
+  // Validate Signing Secret length
   if (signingSecret.length < 32) {
-    invalid.push('SLACK_SIGNING_SECRET appears to be invalid (too short)');
+    invalid.push('SLACK_SIGNING_SECRET appears to be invalid (too short, should be 32+ characters)');
   }
 
+  // Validate State Secret (should be at least 16 characters for security)
+  if (stateSecret.length < 16) {
+    invalid.push('SLACK_STATE_SECRET must be at least 16 characters (generate with: openssl rand -hex 16)');
+  }
+
+  // Validate Database URL
   if (!databaseUrl.startsWith('postgresql://') && !databaseUrl.startsWith('postgres://')) {
     invalid.push('DATABASE_URL must be a valid PostgreSQL connection string');
   }
@@ -69,6 +82,7 @@ export function validateEnv(): EnvConfig {
     console.error('❌ Invalid environment variable formats:');
     invalid.forEach((error) => console.error(`   - ${error}`));
     console.error('\n💡 Please check your .env file and fix the invalid values.');
+    console.error('💡 Generate SLACK_STATE_SECRET with: openssl rand -hex 16');
     process.exit(1);
   }
 
@@ -84,12 +98,13 @@ export function validateEnv(): EnvConfig {
     console.warn('⚠️  SECOND_ESCALATION_MINUTES is not a valid number, will use default');
   }
 
-  console.log('✅ Environment variables validated successfully');
+  console.log('✅ Environment variables validated successfully (OAuth V2 mode)');
 
   return {
-    SLACK_BOT_TOKEN: botToken,
+    SLACK_CLIENT_ID: clientId,
+    SLACK_CLIENT_SECRET: clientSecret,
     SLACK_SIGNING_SECRET: signingSecret,
-    SLACK_APP_TOKEN: appToken,
+    SLACK_STATE_SECRET: stateSecret,
     DATABASE_URL: databaseUrl,
     NODE_ENV: process.env.NODE_ENV,
     FIRST_ESCALATION_MINUTES: firstEscalation,

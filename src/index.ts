@@ -1,4 +1,4 @@
-import { App } from '@slack/bolt';
+import { App, ExpressReceiver } from '@slack/bolt';
 import dotenv from 'dotenv';
 import { registerMessageHandler } from './events/messageHandler.js';
 import { registerReactionHandler } from './events/reactionHandler.js';
@@ -14,6 +14,7 @@ import { startEscalationEngine, stopEscalationEngine } from './services/escalati
 import { validateEnv } from './utils/env.js';
 import { startHealthCheckServer, stopHealthCheckServer } from './services/healthCheck.js';
 import { logger } from './utils/logger.js';
+import { installer } from './oauth/installer.js';
 
 // Load environment variables
 dotenv.config();
@@ -21,11 +22,34 @@ dotenv.config();
 // Validate environment variables before starting
 validateEnv();
 
+// Create custom receiver with OAuth support
+const receiver = new ExpressReceiver({
+  signingSecret: process.env.SLACK_SIGNING_SECRET!,
+  clientId: process.env.SLACK_CLIENT_ID!,
+  clientSecret: process.env.SLACK_CLIENT_SECRET!,
+  stateSecret: process.env.SLACK_STATE_SECRET!,
+  scopes: [
+    'channels:history',
+    'channels:read',
+    'chat:write',
+    'groups:history',
+    'groups:read',
+    'reactions:read',
+    'users:read',
+    'usergroups:read',
+    'commands',
+  ],
+  installerOptions: {
+    directInstall: true, // Enable direct install link
+  },
+  installationStore: installer.installationStore,
+});
+
+// Initialize the Bolt app with OAuth
 const app = new App({
-  token: process.env.SLACK_BOT_TOKEN,
-  signingSecret: process.env.SLACK_SIGNING_SECRET,
-  socketMode: true,
-  appToken: process.env.SLACK_APP_TOKEN,
+  receiver,
+  // Note: token is now fetched automatically from installation store
+  // No need to specify token, appToken, or socketMode
 });
 
 // Register event handlers
@@ -103,29 +127,60 @@ process.on('uncaughtException', async (error) => {
   process.exit(1);
 });
 
+// Add custom routes for OAuth and health checks
+receiver.router.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Slack Question Router</title>
+        <style>
+          body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+          .button { display: inline-block; padding: 12px 24px; background: #4A154B; color: white; text-decoration: none; border-radius: 4px; margin: 10px 0; }
+          .button:hover { background: #611f69; }
+        </style>
+      </head>
+      <body>
+        <h1>🎯 Slack Question Router</h1>
+        <p>Never miss a question in Slack again!</p>
+        <p>Automatically detect, route, and escalate questions to the right experts.</p>
+        <a href="/slack/install" class="button">Add to Slack</a>
+        <hr>
+        <p><small>Version 2.0 - OAuth Edition</small></p>
+      </body>
+    </html>
+  `);
+});
+
 // Start the app
 (async () => {
   try {
-    // Socket Mode doesn't need a port - it uses WebSockets
-    await app.start();
+    // OAuth requires HTTP server on a specific port
+    const port = parseInt(process.env.PORT || '3000');
+    await app.start(port);
 
-    logger.info('Slack Question Router started in Socket Mode');
+    logger.info('Slack Question Router started with OAuth V2', {
+      port,
+      mode: 'HTTP',
+    });
     logger.info('Question detection is active');
     logger.info('Database connected');
-
-    // Test if we can call Slack API
-    const auth = await app.client.auth.test();
-    logger.info('Connected to Slack workspace', {
-      workspace: auth.team,
-      botUser: auth.user,
+    logger.info('OAuth endpoints available:', {
+      install: `http://localhost:${port}/slack/install`,
+      redirect: `http://localhost:${port}/slack/oauth_redirect`,
+      events: `http://localhost:${port}/slack/events`,
     });
 
     // Start escalation engine
     startEscalationEngine(app);
 
-    // Start health check server
-    const healthCheckPort = parseInt(process.env.HEALTH_CHECK_PORT || '3000');
-    startHealthCheckServer(app, healthCheckPort);
+    // Start health check server (on different port if needed)
+    const healthCheckPort = parseInt(process.env.HEALTH_CHECK_PORT || '3001');
+    if (healthCheckPort !== port) {
+      startHealthCheckServer(app, healthCheckPort);
+    } else {
+      logger.info('Health check endpoint available at /health on main port');
+    }
 
     logger.info('All systems ready - awaiting events');
   } catch (error) {
