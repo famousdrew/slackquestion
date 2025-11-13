@@ -48,6 +48,31 @@ const receiver = new ExpressReceiver({
   installationStore: installer.installationStore,
 });
 
+// Add custom routes BEFORE initializing the app
+receiver.router.get('/', (req: any, res: any) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Slack Question Router</title>
+        <style>
+          body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+          .button { display: inline-block; padding: 12px 24px; background: #4A154B; color: white; text-decoration: none; border-radius: 4px; margin: 10px 0; }
+          .button:hover { background: #611f69; }
+        </style>
+      </head>
+      <body>
+        <h1>🎯 Slack Question Router</h1>
+        <p>Never miss a question in Slack again!</p>
+        <p>Automatically detect, route, and escalate questions to the right experts.</p>
+        <a href="/slack/install" class="button">Add to Slack</a>
+        <hr>
+        <p><small>Version 2.0 - OAuth Edition</small></p>
+      </body>
+    </html>
+  `);
+});
+
 // Initialize the Bolt app with OAuth
 const app = new App({
   receiver,
@@ -128,31 +153,6 @@ process.on('uncaughtException', async (error) => {
     logger.error('Error during emergency shutdown', shutdownError as Error);
   }
   process.exit(1);
-});
-
-// Add custom routes for OAuth and health checks
-receiver.router.get('/', (req: any, res: any) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Slack Question Router</title>
-        <style>
-          body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
-          .button { display: inline-block; padding: 12px 24px; background: #4A154B; color: white; text-decoration: none; border-radius: 4px; margin: 10px 0; }
-          .button:hover { background: #611f69; }
-        </style>
-      </head>
-      <body>
-        <h1>🎯 Slack Question Router</h1>
-        <p>Never miss a question in Slack again!</p>
-        <p>Automatically detect, route, and escalate questions to the right experts.</p>
-        <a href="/slack/install" class="button">Add to Slack</a>
-        <hr>
-        <p><small>Version 2.0 - OAuth Edition</small></p>
-      </body>
-    </html>
-  `);
 });
 
 // Start the app
