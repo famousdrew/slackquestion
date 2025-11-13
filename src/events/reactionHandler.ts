@@ -2,7 +2,8 @@
  * Reaction Event Handler
  * Handles reactions to detect answered questions and dismissals
  */
-import { App } from '@slack/bolt';
+import boltPkg from '@slack/bolt';
+import type { App } from '@slack/bolt';
 import { findQuestionByMessageId, markQuestionAnswered } from '../services/questionStorage.js';
 import { ensureWorkspace, ensureUser, prisma } from '../utils/db.js';
 

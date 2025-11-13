@@ -2,7 +2,8 @@
  * Escalation Targets Command Handler
  * Allows admins to manage escalation targets (users, groups, channels)
  */
-import { App } from '@slack/bolt';
+import boltPkg from '@slack/bolt';
+import type { App } from '@slack/bolt';
 import { ensureWorkspace } from '../utils/db.js';
 import {
   getEscalationTargets,

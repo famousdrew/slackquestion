@@ -3,8 +3,6 @@
  * Identifies messages from Zendesk side conversations
  */
 
-import type { App } from '@slack/bolt';
-
 // Cache for Zendesk bot IDs per workspace
 const zendeskBotCache = new Map<string, string>();
 

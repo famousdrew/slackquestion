@@ -2,7 +2,8 @@
  * Test Escalation Command
  * Allows admins to test escalation configuration without waiting
  */
-import { App } from '@slack/bolt';
+import boltPkg from '@slack/bolt';
+import type { App } from '@slack/bolt';
 import { ensureWorkspace } from '../utils/db.js';
 import { getTargetsForLevel } from '../services/escalationTargetService.js';
 import { isWorkspaceAdmin, sendPermissionDenied } from '../utils/permissions.js';

@@ -2,7 +2,8 @@
  * Channel Configuration Command Handler
  * Allows admins to override workspace settings for specific channels
  */
-import { App } from '@slack/bolt';
+import boltPkg from '@slack/bolt';
+import type { App } from '@slack/bolt';
 import { ensureWorkspace, prisma } from '../utils/db.js';
 import { isWorkspaceAdmin, sendPermissionDenied } from '../utils/permissions.js';
 import {
