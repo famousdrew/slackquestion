@@ -15,7 +15,6 @@ import { registerChannelConfigCommand } from './commands/channelConfigCommand.js
 import { disconnectDb } from './utils/db.js';
 import { startEscalationEngine, stopEscalationEngine } from './services/escalationEngine.js';
 import { validateEnv } from './utils/env.js';
-import { startHealthCheckServer, stopHealthCheckServer } from './services/healthCheck.js';
 import { logger } from './utils/logger.js';
 import { installationStore } from './oauth/installer.js';
 
@@ -31,6 +30,7 @@ const receiver = new ExpressReceiver({
   clientId: process.env.SLACK_CLIENT_ID!,
   clientSecret: process.env.SLACK_CLIENT_SECRET!,
   stateSecret: process.env.SLACK_STATE_SECRET!,
+  installationStore,
   scopes: [
     'channels:history',
     'channels:read',
@@ -43,9 +43,8 @@ const receiver = new ExpressReceiver({
     'commands',
   ],
   installerOptions: {
-    directInstall: true, // Enable direct install link
+    directInstall: true,
   },
-  installationStore,
 });
 
 // Add custom routes BEFORE initializing the app
@@ -71,6 +70,15 @@ receiver.router.get('/', (req: any, res: any) => {
       </body>
     </html>
   `);
+});
+
+// Add health check endpoint to main app
+receiver.router.get('/health', async (req: any, res: any) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
 });
 
 // Initialize the Bolt app with OAuth
@@ -120,7 +128,6 @@ app.command('/qr-test', async ({ command, ack, respond, client, logger }: any) =
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, shutting down gracefully...');
   stopEscalationEngine();
-  await stopHealthCheckServer();
   await disconnectDb();
   process.exit(0);
 });
@@ -128,7 +135,6 @@ process.on('SIGTERM', async () => {
 process.on('SIGINT', async () => {
   logger.info('SIGINT received, shutting down gracefully...');
   stopEscalationEngine();
-  await stopHealthCheckServer();
   await disconnectDb();
   process.exit(0);
 });
@@ -147,7 +153,6 @@ process.on('uncaughtException', async (error) => {
   // This is serious - attempt graceful shutdown
   try {
     stopEscalationEngine();
-    await stopHealthCheckServer();
     await disconnectDb();
   } catch (shutdownError) {
     logger.error('Error during emergency shutdown', shutdownError as Error);
@@ -176,14 +181,6 @@ process.on('uncaughtException', async (error) => {
 
     // Start escalation engine
     startEscalationEngine(app);
-
-    // Start health check server (on different port if needed)
-    const healthCheckPort = parseInt(process.env.HEALTH_CHECK_PORT || '3001');
-    if (healthCheckPort !== port) {
-      startHealthCheckServer(app, healthCheckPort);
-    } else {
-      logger.info('Health check endpoint available at /health on main port');
-    }
 
     logger.info('All systems ready - awaiting events');
   } catch (error) {
