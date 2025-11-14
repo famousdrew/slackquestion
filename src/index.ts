@@ -24,13 +24,14 @@ dotenv.config();
 // Validate environment variables before starting
 validateEnv();
 
+logger.info('Creating ExpressReceiver with OAuth configuration...');
+
 // Create custom receiver with OAuth support
 const receiver = new ExpressReceiver({
   signingSecret: process.env.SLACK_SIGNING_SECRET!,
   clientId: process.env.SLACK_CLIENT_ID!,
   clientSecret: process.env.SLACK_CLIENT_SECRET!,
   stateSecret: process.env.SLACK_STATE_SECRET!,
-  installationStore,
   scopes: [
     'channels:history',
     'channels:read',
@@ -42,12 +43,16 @@ const receiver = new ExpressReceiver({
     'usergroups:read',
     'commands',
   ],
+  installationStore,
   installerOptions: {
     directInstall: true,
   },
 });
 
+logger.info('ExpressReceiver created successfully');
+
 // Add custom routes BEFORE initializing the app
+logger.info('Registering custom routes...');
 receiver.router.get('/', (req: any, res: any) => {
   res.send(`
     <!DOCTYPE html>
@@ -81,14 +86,20 @@ receiver.router.get('/health', async (req: any, res: any) => {
   });
 });
 
+logger.info('Custom routes registered');
+
 // Initialize the Bolt app with OAuth
+logger.info('Initializing Bolt App...');
 const app = new App({
   receiver,
   // Note: token is now fetched automatically from installation store
   // No need to specify token, appToken, or socketMode
 });
 
+logger.info('Bolt App initialized successfully');
+
 // Register event handlers
+logger.info('Registering event handlers and commands...');
 registerMessageHandler(app);
 registerReactionHandler(app);
 registerAppHomeHandler(app);
