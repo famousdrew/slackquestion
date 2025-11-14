@@ -176,11 +176,13 @@ process.on('uncaughtException', async (error) => {
   try {
     // OAuth requires HTTP server on a specific port
     const port = parseInt(process.env.PORT || '3000');
-    await app.start(port);
+    // Bind to 0.0.0.0 for Railway/cloud deployments
+    await receiver.app.listen(port, '0.0.0.0');
 
     logger.info('Slack Question Router started with OAuth V2', {
       port,
       mode: 'HTTP',
+      host: '0.0.0.0',
     });
     logger.info('Question detection is active');
     logger.info('Database connected');
