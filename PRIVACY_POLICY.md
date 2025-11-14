@@ -191,10 +191,13 @@ For UK users, we comply with the UK GDPR and Data Protection Act 2018, including
 
 ### 6.2 Retention Periods
 
-- **Question Data:** Retained indefinitely for analytics unless deletion is requested
-- **Escalation Logs:** Retained for 12 months
-- **Error Logs:** Retained for 90 days
-- **Statistics:** Aggregated statistics may be retained indefinitely (anonymized)
+We retain different types of data for different periods based on operational needs:
+
+- **Question Data:** Retained for as long as your workspace has an active installation and for analytics purposes. We may retain historical question data beyond 24 months for long-term analytics. You can request deletion at any time.
+- **Escalation Logs:** Retained for up to 12 months for audit and troubleshooting purposes
+- **Error Logs:** Automatically deleted after 90 days
+- **OAuth Tokens:** Deleted immediately when you uninstall the app
+- **Aggregated Statistics:** May be retained indefinitely in anonymized form (cannot be linked back to individuals)
 
 ### 6.3 Your Right to Request Deletion
 
