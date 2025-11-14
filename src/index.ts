@@ -176,10 +176,16 @@ process.on('uncaughtException', async (error) => {
   try {
     // OAuth requires HTTP server on a specific port
     const port = parseInt(process.env.PORT || '3000');
-    const host = process.env.HOST || '0.0.0.0';
+    const host = '0.0.0.0'; // Always bind to all interfaces for cloud deployments
 
-    // Start the server using Bolt's built-in method
-    await app.start({ port, host });
+    // Start the Express server directly from the receiver
+    // This ensures we're binding to the correct host
+    const server = await new Promise<any>((resolve, reject) => {
+      const srv = receiver.app.listen(port, host, () => {
+        resolve(srv);
+      });
+      srv.on('error', reject);
+    });
 
     logger.info('Slack Question Router started with OAuth V2', {
       port,
