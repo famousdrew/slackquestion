@@ -31,6 +31,7 @@ const receiver = new ExpressReceiver({
   clientId: process.env.SLACK_CLIENT_ID!,
   clientSecret: process.env.SLACK_CLIENT_SECRET!,
   stateSecret: process.env.SLACK_STATE_SECRET!,
+  installationStore,
   scopes: [
     'channels:history',
     'channels:read',
@@ -43,9 +44,8 @@ const receiver = new ExpressReceiver({
     'commands',
   ],
   installerOptions: {
-    directInstall: true, // Enable direct install link
+    directInstall: true,
   },
-  installationStore,
 });
 
 // Add custom routes BEFORE initializing the app
