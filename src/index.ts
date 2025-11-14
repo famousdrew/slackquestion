@@ -12,8 +12,10 @@ import { registerTargetsCommand } from './commands/targetsCommand.js';
 import { registerTestEscalationCommand } from './commands/testEscalationCommand.js';
 import { registerSetupCommand } from './commands/setupCommand.js';
 import { registerChannelConfigCommand } from './commands/channelConfigCommand.js';
+import { registerDeleteDataCommand, registerExportDataCommand } from './commands/deleteDataCommand.js';
 import { disconnectDb } from './utils/db.js';
 import { startEscalationEngine, stopEscalationEngine } from './services/escalationEngine.js';
+import { startDataCleanupSchedule, stopDataCleanupSchedule } from './services/dataCleanup.js';
 import { validateEnv } from './utils/env.js';
 import { logger } from './utils/logger.js';
 import { installationStore } from './oauth/installer.js';
@@ -112,6 +114,10 @@ registerTargetsCommand(app);
 registerTestEscalationCommand(app);
 registerChannelConfigCommand(app);
 
+// Register data privacy commands (GDPR compliance)
+registerDeleteDataCommand(app);
+registerExportDataCommand(app);
+
 // Test command
 app.command('/qr-test', async ({ command, ack, respond, client, logger }: any) => {
   await ack();
@@ -139,6 +145,7 @@ app.command('/qr-test', async ({ command, ack, respond, client, logger }: any) =
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, shutting down gracefully...');
   stopEscalationEngine();
+  stopDataCleanupSchedule();
   await disconnectDb();
   process.exit(0);
 });
@@ -146,6 +153,7 @@ process.on('SIGTERM', async () => {
 process.on('SIGINT', async () => {
   logger.info('SIGINT received, shutting down gracefully...');
   stopEscalationEngine();
+  stopDataCleanupSchedule();
   await disconnectDb();
   process.exit(0);
 });
@@ -164,6 +172,7 @@ process.on('uncaughtException', async (error) => {
   // This is serious - attempt graceful shutdown
   try {
     stopEscalationEngine();
+    stopDataCleanupSchedule();
     await disconnectDb();
   } catch (shutdownError) {
     logger.error('Error during emergency shutdown', shutdownError as Error);
@@ -202,6 +211,9 @@ process.on('uncaughtException', async (error) => {
 
     // Start escalation engine
     startEscalationEngine(app);
+
+    // Start data cleanup schedule (GDPR compliance)
+    startDataCleanupSchedule();
 
     logger.info('All systems ready - awaiting events');
   } catch (error) {
