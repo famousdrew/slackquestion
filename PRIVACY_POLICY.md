@@ -185,19 +185,24 @@ For UK users, we comply with the UK GDPR and Data Protection Act 2018, including
 
 ### 6.1 Active Data
 
-- **Questions:** Retained while in "unanswered" status and for statistical purposes after being answered
+- **Questions:** Retained temporarily based on status (see retention periods below)
 - **User Information:** Retained while the workspace has an active installation
-- **OAuth Tokens:** Retained until the app is uninstalled
+- **OAuth Tokens:** Retained until the app is uninstalled, then deleted immediately
 
 ### 6.2 Retention Periods
 
-We retain different types of data for different periods based on operational needs:
+We automatically delete data based on the following retention schedule:
 
-- **Question Data:** Retained for as long as your workspace has an active installation and for analytics purposes. We may retain historical question data beyond 24 months for long-term analytics. You can request deletion at any time.
+- **Answered Questions:** Automatically deleted after 90 days from when they were answered
+- **Dismissed Questions:** Automatically deleted after 60 days from when they were dismissed
+- **Unanswered Questions:** Automatically deleted after 180 days from when they were asked
+- **Default Maximum:** All question data is deleted within 180 days unless answered or dismissed earlier
 - **Escalation Logs:** Retained for up to 12 months for audit and troubleshooting purposes
 - **Error Logs:** Automatically deleted after 90 days
 - **OAuth Tokens:** Deleted immediately when you uninstall the app
 - **Aggregated Statistics:** May be retained indefinitely in anonymized form (cannot be linked back to individuals)
+
+You can also request immediate deletion of your data at any time (see Section 6.3 below).
 
 ### 6.3 Your Right to Request Deletion
 
@@ -507,11 +512,12 @@ To uninstall the app and stop data collection:
 When you uninstall:
 
 - **Immediate:** We stop collecting new data
-- **OAuth tokens:** Deleted immediately
-- **Historical data:** Retained for 30 days, then deleted (unless you request immediate deletion)
-- **Aggregated statistics:** May be retained in anonymized form
+- **OAuth tokens:** Deleted immediately upon uninstallation
+- **Question data:** Continues on automatic deletion schedule (max 180 days, answered questions 90 days, dismissed 60 days)
+- **User information:** Deleted within 30 days of uninstallation
+- **Aggregated statistics:** May be retained in anonymized form (cannot be linked back to you)
 
-To request immediate deletion, email: [Your Privacy Contact Email]
+To request immediate deletion of all data, email: [Your Privacy Contact Email]
 
 ---
 
