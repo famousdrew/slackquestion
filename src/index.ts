@@ -17,7 +17,7 @@ import { startEscalationEngine, stopEscalationEngine } from './services/escalati
 import { validateEnv } from './utils/env.js';
 import { startHealthCheckServer, stopHealthCheckServer } from './services/healthCheck.js';
 import { logger } from './utils/logger.js';
-import { installer } from './oauth/installer.js';
+import { installationStore } from './oauth/installer.js';
 
 // Load environment variables
 dotenv.config();
@@ -45,7 +45,7 @@ const receiver = new ExpressReceiver({
   installerOptions: {
     directInstall: true, // Enable direct install link
   },
-  installationStore: installer.installationStore,
+  installationStore,
 });
 
 // Add custom routes BEFORE initializing the app
