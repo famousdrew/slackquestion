@@ -309,6 +309,22 @@
             opacity: 0.8;
         }
 
+        footer .legal-links {
+            margin: 20px 0;
+        }
+
+        footer .legal-links a {
+            color: #90cdf4;
+            text-decoration: none;
+            margin: 0 15px;
+            transition: color 0.3s;
+        }
+
+        footer .legal-links a:hover {
+            color: #63b3ed;
+            text-decoration: underline;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             header h1 {
@@ -584,6 +600,11 @@
     <!-- Footer -->
     <footer>
         <div class="container">
+            <div class="legal-links">
+                <a href="PRIVACY-POLICY.md" target="_blank">Privacy Policy</a>
+                <a href="EULA.md" target="_blank">End User License Agreement</a>
+                <a href="mailto:support@slackquestionrouter.com">Contact Support</a>
+            </div>
             <p>&copy; 2025 Fiddlehead Farm, LLC. Built with ❤️ for better team communication.</p>
             <p style="margin-top: 10px; font-size: 0.9rem;">Node.js • TypeScript • Slack Bolt SDK • Prisma • PostgreSQL</p>
         </div>
