@@ -41,9 +41,11 @@ const receiver = new ExpressReceiver({
     'groups:history',
     'groups:read',
     'reactions:read',
+    'reactions:write',
     'users:read',
     'usergroups:read',
     'commands',
+    'team:read',
   ],
   installationStore,
   installerOptions: {
