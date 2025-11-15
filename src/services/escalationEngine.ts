@@ -5,6 +5,7 @@
  */
 import boltPkg from '@slack/bolt';
 import type { App } from '@slack/bolt';
+import type { WebClient } from '@slack/web-api';
 import { prisma } from '../utils/db.js';
 import { getWorkspaceConfig } from './configService.js';
 import {
@@ -17,6 +18,7 @@ import { buildThreadLink, getTeamDomain } from '../utils/slackHelpers.js';
 import { getBatchEffectiveChannelConfigs, type ChannelSettings } from './channelConfigService.js';
 import { setEscalationEngineStatus } from './healthCheck.js';
 import { logger } from '../utils/logger.js';
+import { getAuthorizedClient } from '../utils/authorizedClient.js';
 
 // Type for escalation execution results
 interface EscalationResult {
@@ -99,6 +101,19 @@ async function checkForEscalations(app: App) {
         continue;
       }
 
+      // Get authorized client for this workspace (OAuth mode)
+      let client: WebClient;
+      try {
+        client = await getAuthorizedClient(workspace.slackTeamId);
+      } catch (error) {
+        logger.error('Failed to get authorized client for workspace', {
+          workspaceId: workspace.id,
+          teamId: workspace.slackTeamId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        continue; // Skip this workspace if we can't get auth
+      }
+
       // Batch fetch channel configs to prevent N+1 query problem
       const channelIds = [...new Set(questions.map(q => q.channelId))];
       const channelConfigsMap = await getBatchEffectiveChannelConfigs(channelIds, {
@@ -136,7 +151,7 @@ async function checkForEscalations(app: App) {
 
         // Check if there are any replies in the thread
         const hasReplies = await checkForThreadReplies(
-          app,
+          client,
           question.channel.slackChannelId,
           question.slackMessageId
         );
@@ -170,7 +185,7 @@ async function checkForEscalations(app: App) {
         }
 
         // Perform escalation based on current level
-        await performEscalation(app, question, workspace.id, config);
+        await performEscalation(client, question, workspace.id, config);
       }
     }
   } catch (error) {
@@ -179,16 +194,16 @@ async function checkForEscalations(app: App) {
 }
 
 async function checkForThreadReplies(
-  app: App,
+  client: WebClient,
   channelId: string,
   messageTs: string
 ): Promise<boolean> {
   try {
     // Get bot user ID
-    const authResult = await app.client.auth.test();
+    const authResult = await client.auth.test();
     const botUserId = authResult.user_id;
 
-    const result = await app.client.conversations.replies({
+    const result = await client.conversations.replies({
       channel: channelId,
       ts: messageTs,
       limit: 10,
@@ -214,7 +229,7 @@ async function checkForThreadReplies(
  * Unified escalation function that handles all escalation levels
  * Uses flexible escalation targets from database
  */
-async function performEscalation(app: App, question: any, workspaceId: string, config: any) {
+async function performEscalation(client: WebClient, question: any, workspaceId: string, config: any) {
   try {
     const currentLevel = question.escalationLevel;
     const nextLevel = currentLevel + 1;
@@ -245,7 +260,7 @@ async function performEscalation(app: App, question: any, workspaceId: string, c
 
     // Execute escalation for all targets in parallel
     const results = await Promise.all(
-      targets.map((target) => executeEscalationTarget(app, question, target, questionAge))
+      targets.map((target) => executeEscalationTarget(client, question, target, questionAge))
     );
 
     // Update escalation level
@@ -304,7 +319,7 @@ async function performEscalation(app: App, question: any, workspaceId: string, c
  * Execute escalation for a specific target with detailed result tracking
  */
 async function executeEscalationTarget(
-  app: App,
+  client: WebClient,
   question: any,
   target: EscalationTargetData,
   questionAge: number
@@ -319,7 +334,7 @@ async function executeEscalationTarget(
       case 'user_group': {
         // Post in thread with user group mention
         try {
-          await app.client.chat.postMessage({
+          await client.chat.postMessage({
             channel: channelId,
             thread_ts: messageTs,
             text: `⚠️ This question has been unanswered for ${questionAge} minutes.\n\n<!subteam^${target.targetId}> - Can someone help with this?`,
@@ -345,7 +360,7 @@ async function executeEscalationTarget(
       case 'user': {
         // Post in thread
         try {
-          await app.client.chat.postMessage({
+          await client.chat.postMessage({
             channel: channelId,
             thread_ts: messageTs,
             text: `⚠️ This question has been unanswered for ${questionAge} minutes.\n\n<@${target.targetId}> - Can you help with this?`,
@@ -364,11 +379,11 @@ async function executeEscalationTarget(
         let dmSent = false;
         let dmError = null;
         try {
-          const workspaceInfo = await app.client.team.info();
+          const workspaceInfo = await client.team.info();
           const teamDomain = getTeamDomain(workspaceInfo);
           const threadLink = buildThreadLink(teamDomain, channelId, messageTs);
 
-          await app.client.chat.postMessage({
+          await client.chat.postMessage({
             channel: target.targetId,
             text: `🔔 You've been assigned to help with an unanswered question in #${channelName}:\n\n> ${question.messageText}\n\n<${threadLink}|View Thread →>`,
           });
@@ -391,11 +406,11 @@ async function executeEscalationTarget(
       case 'channel': {
         // Post to escalation channel
         try {
-          const workspaceInfo = await app.client.team.info();
+          const workspaceInfo = await client.team.info();
           const teamDomain = getTeamDomain(workspaceInfo);
           const threadLink = buildThreadLink(teamDomain, channelId, messageTs);
 
-          await app.client.chat.postMessage({
+          await client.chat.postMessage({
             channel: target.targetId,
             text: `🚨 *Unanswered Question Alert*\n\nQuestion from <@${question.asker.slackUserId}> in <#${channelId}> (${questionAge} minutes old):\n\n> ${question.messageText}\n\n<${threadLink}|View Thread →>`,
             unfurl_links: false,
