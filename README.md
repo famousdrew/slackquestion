@@ -9,10 +9,14 @@ A Slack bot that automatically detects questions in channels, tracks them, and e
 📝 **See [MIGRATIONS.md](./MIGRATIONS.md)** for complete migration guide including:
 - Initial database setup for new installations
 - Upgrade migrations for existing deployments
-- Latest: Email privacy migration (removes email column)
+- OAuth V2 migration: `slack_installations` table (NEW)
+- Email privacy migration (removes email column)
 
-**Common migration needed:**
-If you see an error about missing `workspace_config.migrated_to_targets` column, run `migration-add-migrated-to-targets.sql` on your database.
+**Recent migration needed:**
+If you upgraded from Socket Mode to OAuth V2, run `migration-add-slack-installations.sql` on your database.
+
+**Troubleshooting OAuth:**
+See [SESSION-STATUS-OAUTH-DEBUG.md](./SESSION-STATUS-OAUTH-DEBUG.md) for detailed OAuth migration status.
 
 ---
 
@@ -57,9 +61,9 @@ Choose how questions are marked as answered:
 ## Tech Stack
 
 - **Runtime**: Node.js 18+ with TypeScript
-- **Slack SDK**: @slack/bolt (Socket Mode)
+- **Slack SDK**: @slack/bolt with OAuth V2 (HTTP mode)
 - **Database**: PostgreSQL with Prisma ORM
-- **Hosting**: Self-hosted or Railway/Render
+- **Hosting**: Railway (recommended) or any platform with HTTPS support
 
 ## Quick Start
 
@@ -97,32 +101,37 @@ Choose how questions are marked as answered:
    - `usergroups:read`
    - `commands`
 
-4. **Enable Socket Mode**
-   - Go to "Socket Mode" in your app settings
-   - Enable Socket Mode
-   - Generate an App-Level Token with `connections:write` scope
-   - Save the token (starts with `xapp-`)
+4. **Configure OAuth & Redirect URLs**
+   - Go to "OAuth & Permissions"
+   - Under "Redirect URLs", add: `https://your-domain.com/slack/oauth_redirect`
+   - Save the Client ID and Client Secret from "Basic Information"
 
 5. **Enable Event Subscriptions**
-
-   Subscribe to these bot events:
-   - `message.channels`
-   - `message.groups`
-   - `reaction_added`
-   - `reaction_removed`
+   - Go to "Event Subscriptions" and enable
+   - Set Request URL to: `https://your-domain.com/slack/events`
+   - Subscribe to these bot events:
+     - `message.channels`
+     - `message.groups`
+     - `reaction_added`
+     - `reaction_removed`
+     - `app_home_opened`
 
 6. **Add Slash Commands**
 
-   Create these commands:
+   Create these commands (Request URL: `https://your-domain.com/slack/events`):
    - `/qr-test` - Test that the bot is running
+   - `/qr-setup` - Initial setup wizard
    - `/qr-stats` - View question statistics
    - `/qr-config` - Open configuration modal (escalation settings, answer detection mode)
    - `/qr-targets` - Manage escalation targets (users, groups, channels)
+   - `/qr-delete-my-data` - GDPR: Delete user's personal data
+   - `/qr-export-my-data` - GDPR: Export user's data
 
-7. **Install App to Workspace**
-   - Go to "Install App" and click "Install to Workspace"
-   - Authorize the app
-   - Save your Bot Token (starts with `xoxb-`)
+7. **Deploy to Railway (or similar)**
+   - Push code to GitHub
+   - Connect repository to Railway
+   - Railway will provide your HTTPS domain
+   - Update Slack app URLs with the Railway domain
 
 8. **Set up Database**
 
@@ -136,46 +145,55 @@ Choose how questions are marked as answered:
 
 9. **Configure Environment Variables**
 
-   Create `.env` file:
+   Set these in Railway (or `.env` for local dev):
    ```env
-   # Slack Tokens (Required)
-   SLACK_BOT_TOKEN=xoxb-your-bot-token
-   SLACK_SIGNING_SECRET=your-signing-secret
-   SLACK_APP_TOKEN=xapp-your-app-token
+   # Slack OAuth Credentials (Required)
+   SLACK_CLIENT_ID=1234567890.1234567890
+   SLACK_CLIENT_SECRET=your-client-secret-here
+   SLACK_SIGNING_SECRET=your-signing-secret-here
+   SLACK_STATE_SECRET=your-random-32-char-secret  # Generate with: openssl rand -hex 16
 
    # Database (Required)
    DATABASE_URL=postgresql://user:password@host:5432/database
 
+   # Server (Required for Railway)
+   PORT=3000
+   NODE_ENV=production
+
    # Default Escalation Settings (Optional - can be configured via /qr-config modal)
    FIRST_ESCALATION_MINUTES=2                 # Default: 2 minutes
    SECOND_ESCALATION_MINUTES=4                # Default: 4 minutes
-   ESCALATION_USER_GROUP=t2                   # Fallback if not set in modal
-   ESCALATION_CHANNEL=GN9LYD9T4               # Fallback if not set in modal
    ```
 
-   **Note**: Escalation settings are now configured per-workspace using the `/qr-config` modal.
-   Environment variables serve as fallback defaults.
+   **Note**: No longer using `SLACK_BOT_TOKEN` or `SLACK_APP_TOKEN` - OAuth tokens are stored in database.
 
-10. **Run Prisma Setup**
+10. **Run Database Migrations**
     ```bash
+    # Initialize schema
+    psql $DATABASE_URL -f init-database.sql
+
+    # Add OAuth table
+    psql $DATABASE_URL -f migration-add-slack-installations.sql
+
+    # Generate Prisma client
     npx prisma generate
-    npx prisma db push
     ```
 
-11. **Start the Bot**
-    ```bash
-    npm run dev
+11. **Install App via OAuth**
+
+    After deployment, visit:
+    ```
+    https://your-railway-domain.up.railway.app/slack/install
     ```
 
-You should see:
+    Click "Add to Slack" to authorize the app and store OAuth tokens in the database.
+
+You should see in logs:
 ```
-⚡️ Slack Question Router is running in Socket Mode!
-📊 Question detection is active
-💾 Database connected
-✅ Connected to Slack workspace: Your Workspace
-🤖 Bot user: @questionrouter
-🎉 Ready to receive events!
-🚨 Starting escalation engine...
+[info] Slack Question Router started with OAuth V2
+[info] OAuth endpoints available: {install, redirect, events}
+[info] Escalation engine started
+[info] All systems ready - awaiting events
 ```
 
 ## Usage
@@ -441,16 +459,17 @@ See `prisma/schema.prisma` for full schema.
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `SLACK_BOT_TOKEN` | Yes | - | Bot token (xoxb-...) |
-| `SLACK_SIGNING_SECRET` | Yes | - | Signing secret from Slack app |
-| `SLACK_APP_TOKEN` | Yes | - | App-level token (xapp-...) |
+| `SLACK_CLIENT_ID` | Yes | - | OAuth Client ID from Slack app |
+| `SLACK_CLIENT_SECRET` | Yes | - | OAuth Client Secret from Slack app |
+| `SLACK_SIGNING_SECRET` | Yes | - | Signing secret for request validation |
+| `SLACK_STATE_SECRET` | Yes | - | Random secret for OAuth state (generate with `openssl rand -hex 16`) |
 | `DATABASE_URL` | Yes | - | PostgreSQL connection string |
+| `PORT` | No | 3000 | HTTP server port |
+| `NODE_ENV` | No | development | Environment (production/development) |
 | `FIRST_ESCALATION_MINUTES` | No | 2 | Default minutes before first escalation |
 | `SECOND_ESCALATION_MINUTES` | No | 4 | Default minutes before second escalation |
-| `ESCALATION_USER_GROUP` | No | - | Fallback user group handle |
-| `ESCALATION_CHANNEL` | No | - | Fallback channel ID |
 
-**Note**: Escalation targets (user group and channel) are now configured per-workspace via `/qr-config` modal. Environment variables serve as fallback defaults only.
+**Note**: With OAuth V2, bot tokens are stored in the database (slack_installations table) and fetched per workspace. No need for `SLACK_BOT_TOKEN` or `SLACK_APP_TOKEN` environment variables.
 
 ### Channel Monitoring
 
@@ -466,28 +485,49 @@ UPDATE channels SET is_monitored = true WHERE channel_name = 'support';
 
 ## Troubleshooting
 
+### OAuth Installation Issues
+
+**`slack_oauth_invalid_state` error:**
+- OAuth state stored in memory lost during Railway restart
+- Solution: Use fresh browser session, try again
+
+**`missing_scope: team:read` or similar:**
+- Bot doesn't have required permissions
+- Solution: User must reinstall app to grant new scopes
+
+**`not_authed` errors in escalation engine:**
+- Background tasks can't access OAuth tokens
+- Solution: Ensure `slack_installations` table exists and has data
+- Run: `SELECT * FROM slack_installations;`
+
+**P2002 / P2022 Prisma errors:**
+- Database schema mismatch
+- Solution: Run `migration-add-slack-installations.sql`
+
 ### Bot not detecting questions
 - Check bot is invited to the channel (`/invite @questionrouter`)
 - Verify channel is monitored: `SELECT * FROM channels WHERE is_monitored = true`
 - Check logs for "Message received" entries
 - Ensure question has question mark or question words
+- Verify OAuth installation: `SELECT * FROM slack_installations;`
 
 ### Escalations not firing
-- Check `FIRST_ESCALATION_MINUTES` and `SECOND_ESCALATION_MINUTES` in `.env`
 - Verify escalation engine started (look for "Starting escalation engine" log)
 - Check question status: `SELECT * FROM questions WHERE status = 'unanswered'`
-- Check answer detection mode: `/qr-config show`
+- Check answer detection mode: `/qr-config`
+- Verify OAuth tokens are valid (no `not_authed` errors)
+- Ensure escalation targets are configured: `SELECT * FROM escalation_targets;`
 
 ### User group mention not working
 - Get correct user group ID: `node get-usergroups.js`
-- Update `ESCALATION_USER_GROUP` in `.env` with the handle (not ID)
-- Restart bot
+- Use `/qr-targets` to configure (not environment variables)
+- Ensure bot has `usergroups:read` scope
 
 ### Second escalation channel not found
 - Private channels need channel ID, not name
 - Get channel ID: `node get-channels.js` or from channel URL
-- Update `ESCALATION_CHANNEL` in `.env` with channel ID
 - Ensure bot is member of the channel
+- Use `/qr-targets` to configure
 
 ### Prisma errors
 ```bash
@@ -499,6 +539,19 @@ npx prisma db push
 
 # View database
 npx prisma studio
+```
+
+### Common OAuth Errors
+
+```bash
+# Check OAuth installation
+psql $DATABASE_URL -c "SELECT team_id, bot_user_id, installed_at FROM slack_installations;"
+
+# Verify table structure
+psql $DATABASE_URL -c "\d slack_installations"
+
+# Check all required columns exist
+psql $DATABASE_URL -c "SELECT column_name FROM information_schema.columns WHERE table_name = 'slack_installations';"
 ```
 
 ## Development
