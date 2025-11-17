@@ -343,7 +343,7 @@ export function registerSetupCommand(app: App) {
                 initial_option: {
                   text: {
                     type: 'plain_text',
-                    text: 'Hybrid (Recommended)',
+                    text: 'Hybrid (Recommended) - Replies stop escalation, ✅ marks complete',
                   },
                   value: 'hybrid',
                 },
