@@ -19,6 +19,7 @@ import { startDataCleanupSchedule, stopDataCleanupSchedule } from './services/da
 import { validateEnv } from './utils/env.js';
 import { logger } from './utils/logger.js';
 import { installationStore } from './oauth/installer.js';
+import { stateStore, cleanupExpiredStates } from './oauth/stateStore.js';
 
 // Load environment variables
 dotenv.config();
@@ -48,6 +49,7 @@ const receiver = new ExpressReceiver({
     'team:read',
   ],
   installationStore,
+  stateStore, // Database-backed state store to survive restarts
   installerOptions: {
     directInstall: true,
   },

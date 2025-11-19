@@ -9,14 +9,25 @@ A Slack bot that automatically detects questions in channels, tracks them, and e
 📝 **See [MIGRATIONS.md](./MIGRATIONS.md)** for complete migration guide including:
 - Initial database setup for new installations
 - Upgrade migrations for existing deployments
-- OAuth V2 migration: `slack_installations` table (NEW)
+- OAuth V2 migration: `slack_installations` table
+- OAuth State persistence: `oauth_states` table (**NEW - Required for multi-workspace installations**)
 - Email privacy migration (removes email column)
 
-**Recent migration needed:**
-If you upgraded from Socket Mode to OAuth V2, run `migration-add-slack-installations.sql` on your database.
+**Recent migrations needed:**
 
-**Troubleshooting OAuth:**
-See [SESSION-STATUS-OAUTH-DEBUG.md](./SESSION-STATUS-OAUTH-DEBUG.md) for detailed OAuth migration status.
+1. **OAuth State Migration (NEW)** - Fixes "slack_oauth_missing_state" error:
+   ```bash
+   psql $DATABASE_URL -f migration-add-oauth-states.sql
+   ```
+   This is **required** if you're installing to multiple Slack workspaces or experiencing OAuth errors.
+
+2. **OAuth V2 Migration** - If you upgraded from Socket Mode:
+   ```bash
+   psql $DATABASE_URL -f migration-add-slack-installations.sql
+   ```
+
+**Troubleshooting Multi-Workspace Installations:**
+See [INSTALLATION-TROUBLESHOOTING.md](./INSTALLATION-TROUBLESHOOTING.md) for detailed help with installing to multiple Slack workspaces.
 
 ---
 
