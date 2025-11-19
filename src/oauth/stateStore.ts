@@ -7,6 +7,7 @@
  */
 
 import { InstallURLOptions } from '@slack/oauth';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../utils/db.js';
 import { logger } from '../utils/logger.js';
 
@@ -19,7 +20,7 @@ const STATE_EXPIRY_MINUTES = 10;
  */
 export const stateStore = {
   /**
-   * Generate and store a new OAuth state value
+   * Generate and store a new OAuth state value along with installation options
    */
   generateStateParam: async (installOptions: InstallURLOptions, now: Date): Promise<string> => {
     try {
@@ -32,12 +33,14 @@ export const stateStore = {
       logger.debug('Generating OAuth state', {
         state: state.substring(0, 8) + '...',
         expiresAt: expiresAt.toISOString(),
+        hasInstallOptions: !!installOptions,
       });
 
-      // Store in database
+      // Store in database with installation options
       await prisma.oAuthState.create({
         data: {
           state,
+          installOptions: installOptions as unknown as Prisma.InputJsonValue,
           expiresAt,
         },
       });
@@ -56,9 +59,9 @@ export const stateStore = {
   },
 
   /**
-   * Verify that a state value exists and hasn't expired
+   * Verify state and return the stored installation options
    */
-  verifyStateParam: async (now: Date, state: string): Promise<void> => {
+  verifyStateParam: async (now: Date, state: string): Promise<InstallURLOptions> => {
     try {
       logger.debug('Verifying OAuth state', {
         state: state.substring(0, 8) + '...',
@@ -96,6 +99,9 @@ export const stateStore = {
         state: state.substring(0, 8) + '...',
       });
 
+      // Get install options
+      const installOptions = storedState.installOptions as unknown as InstallURLOptions;
+
       // Delete state after successful verification (one-time use)
       await prisma.oAuthState.delete({
         where: { state },
@@ -104,6 +110,9 @@ export const stateStore = {
       logger.debug('OAuth state deleted after verification', {
         state: state.substring(0, 8) + '...',
       });
+
+      // Return the install options
+      return installOptions;
     } catch (error) {
       logger.error('Failed to verify OAuth state', {
         error: error instanceof Error ? error.message : String(error),

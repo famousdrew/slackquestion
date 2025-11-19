@@ -3,12 +3,14 @@
 -- This allows the OAuth flow to survive server restarts (e.g., Railway deployments)
 --
 -- Created: 2025-11-19
+-- Updated: 2025-11-19 - Added install_options column
 -- Related Issue: Second Slack workspace installation fails with missing state error
 
 -- Create oauth_states table
 CREATE TABLE IF NOT EXISTS oauth_states (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   state VARCHAR(255) NOT NULL UNIQUE,
+  install_options JSONB NOT NULL,  -- Store InstallURLOptions for the OAuth flow
   expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
