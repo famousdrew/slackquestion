@@ -6,6 +6,7 @@
 import { prisma } from '../utils/db.js';
 import { logger } from '../utils/logger.js';
 import { QUESTION_STATUS } from '../utils/constants.js';
+import { cleanupExpiredStates } from '../oauth/stateStore.js';
 
 // Data retention configuration from environment variables
 const ANSWERED_QUESTIONS_RETENTION_DAYS = parseInt(
@@ -153,6 +154,7 @@ export async function runDataCleanup(): Promise<{
   answeredDeleted: number;
   dismissedDeleted: number;
   unansweredDeleted: number;
+  oauthStatesDeleted: number;
   totalDeleted: number;
 }> {
   logger.info('Starting scheduled data cleanup job');
@@ -163,14 +165,16 @@ export async function runDataCleanup(): Promise<{
     const answeredDeleted = await cleanupOldAnsweredQuestions();
     const dismissedDeleted = await cleanupOldDismissedQuestions();
     const unansweredDeleted = await cleanupOldUnansweredQuestions();
+    const oauthStatesDeleted = await cleanupExpiredStates();
 
-    const totalDeleted = answeredDeleted + dismissedDeleted + unansweredDeleted;
+    const totalDeleted = answeredDeleted + dismissedDeleted + unansweredDeleted + oauthStatesDeleted;
     const duration = Date.now() - startTime;
 
     logger.info('Data cleanup job completed', {
       answeredDeleted,
       dismissedDeleted,
       unansweredDeleted,
+      oauthStatesDeleted,
       totalDeleted,
       durationMs: duration,
     });
@@ -179,6 +183,7 @@ export async function runDataCleanup(): Promise<{
       answeredDeleted,
       dismissedDeleted,
       unansweredDeleted,
+      oauthStatesDeleted,
       totalDeleted,
     };
   } catch (error) {
