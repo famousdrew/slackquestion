@@ -2,6 +2,8 @@ import boltPkg from '@slack/bolt';
 const App = (boltPkg as any).App || boltPkg;
 const ExpressReceiver = (boltPkg as any).ExpressReceiver;
 import type { App as AppType } from '@slack/bolt';
+import type { Installation, InstallURLOptions } from '@slack/oauth';
+import type { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import { registerMessageHandler } from './events/messageHandler.js';
 import { registerReactionHandler } from './events/reactionHandler.js';
@@ -52,6 +54,77 @@ const receiver = new ExpressReceiver({
   stateStore, // Database-backed state store to survive restarts
   installerOptions: {
     directInstall: true,
+    callbackOptions: {
+      success: async (installation: Installation, installOptions: InstallURLOptions, req: Request, res: Response) => {
+        // OAuth installation succeeded
+        logger.info('OAuth installation succeeded', {
+          teamId: installation.team?.id,
+          enterpriseId: installation.enterprise?.id,
+        });
+
+        // Redirect to a success page
+        res.send(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Installation Successful</title>
+              <style>
+                body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center; }
+                h1 { color: #4A154B; }
+                .success { color: #2eb886; font-size: 48px; margin: 20px 0; }
+                .button { display: inline-block; padding: 12px 24px; background: #4A154B; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0; }
+                .button:hover { background: #611f69; }
+              </style>
+            </head>
+            <body>
+              <div class="success">✅</div>
+              <h1>Installation Successful!</h1>
+              <p>Question Router has been installed to your Slack workspace.</p>
+              <p><strong>Next steps:</strong></p>
+              <ol style="text-align: left;">
+                <li>Open Slack and go to the Question Router app home</li>
+                <li>Run <code>/qr-setup</code> to configure your settings</li>
+                <li>Invite the bot to channels you want to monitor</li>
+                <li>Start asking questions!</li>
+              </ol>
+              <a href="slack://app" class="button">Open Slack</a>
+            </body>
+          </html>
+        `);
+      },
+      failure: async (error: Error, installOptions: InstallURLOptions, req: Request, res: Response) => {
+        // OAuth installation failed
+        logger.error('OAuth installation failed', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+
+        // Show error page
+        res.send(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Installation Failed</title>
+              <style>
+                body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; text-align: center; }
+                h1 { color: #e01e5a; }
+                .error { color: #e01e5a; font-size: 48px; margin: 20px 0; }
+                .button { display: inline-block; padding: 12px 24px; background: #4A154B; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0; }
+                .button:hover { background: #611f69; }
+                code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+              </style>
+            </head>
+            <body>
+              <div class="error">❌</div>
+              <h1>Installation Failed</h1>
+              <p>There was an error installing Question Router to your workspace.</p>
+              <p><strong>Error:</strong> <code>${error instanceof Error ? error.message : 'Unknown error'}</code></p>
+              <p>Please try again or contact support if the problem persists.</p>
+              <a href="/slack/install" class="button">Try Again</a>
+            </body>
+          </html>
+        `);
+      },
+    },
   },
 });
 
